@@ -7,27 +7,30 @@ from flask import Flask
 import numpy as np
 import pandas as pd
 import requests
+import logging
 
 # ==========================================
-# 1. UptimeRobot 전용 헬스체크 웹 서버
+# 1. Flask 서버 로깅 억제 (트레이딩 로그 집중)
 # ==========================================
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 web_app = Flask(__name__)
 
 @web_app.route('/')
 def health_check():
-    """UptimeRobot 핑 감지 및 GitHub Pages 대시보드 상태 서빙"""
     return f"EYE System Active! Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 200
 
 def run_flask():
-    web_app.run(host='0.0.0.0', port=8080)
+    web_app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
 
 # ==========================================
-# 2. 리스크 및 트레이딩 파라미터 (Notebook 원칙 충실 반영)
+# 2. 리스크 및 자동매매 설정 (Notebook 원칙)
 # ==========================================
 INITIAL_SEED = 100000.0        # 시드머니: 10만원
 MAX_RISK_PER_TRADE = 0.015     # 1회 최대 허용 손실률: 1.5%
-MIN_ORDER_VALUE = 5000.0       # 최소 주문금액 보정
-SLIPPAGE_RATE = 0.001          # 슬리피지 보정 (0.1%)
+MIN_ORDER_VALUE = 5000.0       # 최소 주문금액
+SLIPPAGE_RATE = 0.001          # 가상 슬리피지 (0.1%)
 TARGET_ALTS = ["XRP_KRW", "ITH_KRW", "SOL_KRW", "DOGE_KRW"]
 
 class EYETRADER:
@@ -37,9 +40,6 @@ class EYETRADER:
         self.btc_status = "STABLE"
         self.journal = []
 
-    # --------------------------------------
-    # [Notebook 1. 시장 데이터 수집 모듈]
-    # --------------------------------------
     def fetch_ohlcv(self, symbol, interval="15m", count=50):
         try:
             url = f"https://api.bithumb.com/public/candlestick/{symbol}/{interval}"
@@ -51,20 +51,9 @@ class EYETRADER:
                     df[col] = df[col].astype(float)
                 return df
         except Exception as e:
-            print(f"[{datetime.now()}] [ERR] 데이터 수집 실패 ({symbol}): {e}")
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] [ERR] 데이터 수집 실패 ({symbol}): {e}")
         return pd.DataFrame()
 
-    def fetch_binance_oi(self):
-        try:
-            url = "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT"
-            res = requests.get(url, timeout=3).json()
-            return float(res.get("openInterest", 0))
-        except:
-            return 0.0
-
-    # --------------------------------------
-    # [Notebook 2 & 3. 시장 상태 및 전략 엔진]
-    # --------------------------------------
     def analyze_strategy_signals(self, df):
         if df.empty or len(df) < 20:
             return df
@@ -89,29 +78,20 @@ class EYETRADER:
         df['momentum'] = df['val'].rolling(window=20).mean()
         return df
 
-    # --------------------------------------
-    # [Notebook 4. 리스크 관리 엔진]
-    # --------------------------------------
     def calculate_position(self, entry_price, stop_loss):
         """포지션 크기 = 허용 손실액 ÷ (진입가 - 손절가)"""
         risk_per_unit = abs(entry_price - stop_loss)
         if risk_per_unit == 0:
             return 0.0
 
-        target_max_loss = self.balance * MAX_RISK_PER_TRADE  # 허용 손실액
+        target_max_loss = self.balance * MAX_RISK_PER_TRADE
         calculated_quantity = target_max_loss / risk_per_unit
         calculated_value = calculated_quantity * entry_price
 
         final_value = min(calculated_value, self.balance * 0.5)
         return final_value if final_value >= MIN_ORDER_VALUE else 0.0
 
-    # --------------------------------------
-    # [Notebook 5. AI 트레이더 근거 평가]
-    # --------------------------------------
     def evaluate_and_execute(self, symbol):
-        if self.active_position is not None:
-            return
-
         df = self.fetch_ohlcv(symbol, interval="15m")
         df = self.analyze_strategy_signals(df)
         if df.empty or len(df) < 2:
@@ -122,6 +102,13 @@ class EYETRADER:
 
         squeeze_released = prev['squeeze_on'] and not curr['squeeze_on']
         momentum_bullish = (curr['momentum'] > 0) and (curr['momentum'] > prev['momentum'])
+
+        # 실시간 스캔 상태 출력
+        now_str = datetime.now().strftime('%H:%M:%S')
+        print(f"[{now_str}] 🔍 [{symbol}] 현재가: {curr['close']:,.0f}원 | Squeeze: {curr['squeeze_on']} | Momentum: {curr['momentum']:.2f}")
+
+        if self.active_position is not None:
+            return
 
         if squeeze_released and momentum_bullish and self.btc_status != "DUMP":
             entry_price = curr['close'] * (1 + SLIPPAGE_RATE)
@@ -139,13 +126,10 @@ class EYETRADER:
                     "take_profit": take_profit,
                     "quantity": position_size / entry_price,
                     "value": position_size,
-                    "reason": "스퀴즈 해제 및 모멘텀 확장"
+                    "reason": "스퀴즈 해제 및 모멘텀 돌파"
                 }
-                print(f"[{datetime.now()}] 🟢 [BUY] {symbol} | 진입가: {entry_price:,.1f}원 | 손절가: {stop_loss:,.1f}원 | 익절가: {take_profit:,.1f}원")
+                print(f"[{now_str}] 🟢 [BUY Execution] {symbol} | 진입가: {entry_price:,.1f}원 | 손절가: {stop_loss:,.1f}원 | 익절가: {take_profit:,.1f}원")
 
-    # --------------------------------------
-    # [Notebook 6. 매매일지 모듈]
-    # --------------------------------------
     def monitor_active_position(self):
         if self.active_position is None:
             return
@@ -156,6 +140,8 @@ class EYETRADER:
             return
 
         curr_price = df.iloc[-1]['close']
+        now_str = datetime.now().strftime('%H:%M:%S')
+        print(f"[{now_str}] 📈 [Holding {pos['symbol']}] 현재가: {curr_price:,.0f}원 | 손절가: {pos['stop_loss']:,.0f}원 | 익절가: {pos['take_profit']:,.0f}원")
 
         if curr_price <= pos['stop_loss']:
             self._close_position(curr_price, "STOP_LOSS")
@@ -183,7 +169,9 @@ class EYETRADER:
             "balance_after": round(self.balance, 2)
         }
         self.journal.append(record)
-        print(f"[{datetime.now()}] 🔴 [SELL] {pos['symbol']} | 사유: {reason} | PnL: {pnl:+,.0f}원 ({pnl_pct:+.2f}%)")
+        os.makedirs("logs", exist_ok=True)
+        pd.DataFrame(self.journal).to_csv("logs/trade_journal.csv", index=False)
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔴 [SELL Execution] {pos['symbol']} | {reason} | PnL: {pnl:+,.0f}원 ({pnl_pct:+.2f}%)")
         self.active_position = None
 
     def update_btc_macro(self):
@@ -191,9 +179,10 @@ class EYETRADER:
         if not df.empty:
             price_change = ((df.iloc[-1]['close'] / df.iloc[0]['close']) - 1) * 100
             self.btc_status = "DUMP" if price_change < -3.0 else "STABLE"
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔍 [BTC Status Check] 상태: {self.btc_status} (24H 변동률: {price_change:+.2f}%)")
 
 # ==========================================
-# 3. 비동기 스케줄러 및 시작점
+# 3. 비동기 트레이딩 실행 루프
 # ==========================================
 bot = EYETRADER()
 
@@ -204,6 +193,7 @@ async def task_1min():
 
 async def task_15min():
     while True:
+        print(f"\n--- [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Target Altcoin Scanning ---")
         for symbol in TARGET_ALTS:
             bot.evaluate_and_execute(symbol)
             await asyncio.sleep(1)
@@ -212,13 +202,10 @@ async def task_15min():
 async def task_1hour():
     while True:
         bot.update_btc_macro()
-        if bot.journal:
-            os.makedirs("logs", exist_ok=True)
-            pd.DataFrame(bot.journal).to_csv("logs/trade_journal.csv", index=False)
         await asyncio.sleep(3600)
 
 async def main():
-    print("🚀 EYE.py 가동 시작...")
+    print("🚀 EYE.py AI Trader Pipeline Started...")
     bot.update_btc_macro()
     await asyncio.gather(
         task_1min(),
@@ -232,3 +219,4 @@ if __name__ == "__main__":
     flask_thread.start()
 
     asyncio.run(main())
+
