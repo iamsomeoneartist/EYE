@@ -3,33 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EYE Trader Dashboard</title>
+    <title>EYE Professional AI Trader Monitoring Dashboard</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
-        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 20px; margin-bottom: 20px; }
-        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 12px; background-color: #238636; color: white; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #30363d; padding: 10px; text-align: left; }
+        :root { --bg-color: #0d1117; --card-bg: #161b22; --border-color: #30363d; --text-main: #c9d1d9; --accent-blue: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; }
+        .card h3 { margin-top: 0; color: #8b949e; font-size: 0.9em; text-transform: uppercase; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.85em; }
+        .badge-green { background-color: rgba(63, 185, 80, 0.2); color: var(--green); border: 1px solid var(--green); }
+        .badge-red { background-color: rgba(248, 81, 73, 0.2); color: var(--red); border: 1px solid var(--red); }
+        .badge-yellow { background-color: rgba(210, 153, 34, 0.2); color: var(--yellow); border: 1px solid var(--yellow); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: left; font-size: 0.9em; }
         th { background-color: #21262d; color: #8b949e; }
-        .positive { color: #3fb950; }
-        .negative { color: #f85149; }
+        .positive { color: var(--green); font-weight: bold; }
+        .negative { color: var(--red); font-weight: bold; }
+        .val-highlight { font-size: 1.4em; font-weight: bold; margin: 5px 0; color: #f0f6fc; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 EYE AI Trader System Dashboard</h1>
-        
-        <div class="card">
-            <h2>시스템 상태</h2>
-            <p>파이프라인 상태: <span class="status-badge">ONLINE</span></p>
-            <p>최종 동기화 시간: <span id="sync-time">-</span></p>
+        <h1>
+            <span>🚀 EYE Professional AI Trader Dashboard</span>
+            <span id="pipeline-status" class="status-badge badge-green">RUNNING</span>
+        </h1>
+        <p style="font-size:0.85em; color:#8b949e;">최종 상태 업데이트: <span id="sync-time">-</span> (5초마다 자동 동기화)</p>
+
+        <!-- 전문 트레이더 모듈별 실시간 모니터링 카드 -->
+        <div class="grid">
+            <div class="card">
+                <h3>1. 시장 상태 분석가 (BTC Macro)</h3>
+                <div id="btc-status" class="val-highlight">STABLE</div>
+                <p style="font-size:0.85em;">24H BTC 변동률: <span id="btc-change">0.00%</span></p>
+                <p style="font-size:0.8em; color:#8b949e;">원칙: BTC 급락(DUMP) 시 신규 진입 차단</p>
+            </div>
+            <div class="card">
+                <h3>2. 리스크 관리 엔진 (Risk Control)</h3>
+                <div class="val-highlight">1회 손실 <span style="color:var(--yellow);">1.5%</span> 제한</div>
+                <p style="font-size:0.85em;">시드 잔고: <span id="current-balance">100,000</span>원</p>
+                <p style="font-size:0.8e; color:#8b949e;">포지션 크기 = 허용손실액 ÷ (진입가-손절가)</p>
+            </div>
+            <div class="card">
+                <h3>3. 전략 엔진 (Squeeze Momentum)</h3>
+                <div id="active-symbol" class="val-highlight">감시 중</div>
+                <p style="font-size:0.85em;">현재 보유 포지션: <span id="active-pos-info">NONE</span></p>
+                <p style="font-size:0.8em; color:#8b949e;">스퀴즈 해제 + 0선 모멘텀 상향 돌파 검증</p>
+            </div>
+            <div class="card">
+                <h3>4. 파생상품·OI 분석가 (Binance Filter)</h3>
+                <div id="binance-oi" class="val-highlight">-</div>
+                <p style="font-size:0.85em;">바이낸스 BTC 선물 미결제약정(OI)</p>
+                <p style="font-size:0.8em; color:#8b949e;">글로벌 유동성 변화 크로스 검증</p>
+            </div>
         </div>
 
+        <!-- 실시간 알트코인 스캐닝 현황 -->
+        <div class="card" style="margin-bottom: 20px;">
+            <h3>🔍 4대 감시 알트코인 실시간 스캔 현황 (15m Candle)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>종목</th>
+                        <th>현재가</th>
+                        <th>Squeeze 상태</th>
+                        <th>Momentum 지표</th>
+                        <th>AI 판단 근거 평가</th>
+                    </tr>
+                </thead>
+                <tbody id="scan-table-body">
+                    <tr><td colspan="5" style="text-align:center;">실시간 스캔 데이터를 동기화 중입니다...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 최근 매매일지 -->
         <div class="card">
-            <h2>📊 최근 매매일지 (Trade Journal)</h2>
-            <table id="journal-table">
+            <h3>📊 매매일지 (Trade Journal & Backtest Logs)</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>진입시간</th>
@@ -39,55 +92,97 @@
                         <th>손익(원)</th>
                         <th>수익률</th>
                         <th>청산사유</th>
+                        <th>청산 후 잔고</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="7" style="text-align:center;">매매일지 데이터를 불러오는 중...</td>
-                    </tr>
+                <tbody id="journal-table-body">
+                    <tr><td colspan="8" style="text-align:center;">기록된 매매일지가 없습니다.</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // GitHub Actions가 푸시하는 logs/trade_journal.csv 파일 로드
-        async function loadJournal() {
+        async function updateDashboard() {
             try {
-                const response = await fetch('logs/trade_journal.csv');
-                if (!response.ok) throw new Error('로그 파일 없음');
-                const data = await response.text();
-                
-                const rows = data.trim().split('\n').slice(1);
-                const tbody = document.querySelector('#journal-table tbody');
-                tbody.innerHTML = '';
+                // 1. 실시간 모니터링 상태 데이터 호출
+                const statusRes = await fetch('logs/status.json?t=' + new Date().getTime());
+                if (statusRes.ok) {
+                    const status = await statusRes.json();
+                    document.getElementById('sync-time').innerText = status.updated_at;
+                    document.getElementById('btc-status').innerText = status.btc_status;
+                    document.getElementById('btc-status').className = 'val-highlight ' + (status.btc_status === 'DUMP' ? 'negative' : 'positive');
+                    document.getElementById('btc-change').innerText = (status.btc_change >= 0 ? '+' : '') + status.btc_change + '%';
+                    document.getElementById('current-balance').innerText = Math.round(status.balance).toLocaleString();
+                    document.getElementById('binance-oi').innerText = Number(status.binance_oi).toLocaleString() + " OI";
 
-                rows.reverse().forEach(row => {
-                    const cols = row.split(',');
-                    if (cols.length >= 8) {
+                    // 스캔 테이블 업데이트
+                    const scanTbody = document.getElementById('scan-table-body');
+                    scanTbody.innerHTML = '';
+                    status.scan_results.forEach(item => {
                         const tr = document.createElement('tr');
-                        const pnl = parseFloat(cols[7]);
-                        const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+                        const squeezeBadge = item.squeeze_on 
+                            ? `<span class="status-badge badge-yellow">응축 (Squeeze ON)</span>` 
+                            : `<span class="status-badge badge-green">폭발 (Squeeze OFF)</span>`;
+                        const momClass = item.momentum > 0 ? 'positive' : 'negative';
                         
                         tr.innerHTML = `
-                            <td>${cols[1]}</td>
-                            <td>${cols[0]}</td>
-                            <td>${parseFloat(cols[2]).toLocaleString()}원</td>
-                            <td>${parseFloat(cols[6]).toLocaleString()}원</td>
-                            <td class="${pnlClass}">${pnl.toLocaleString()}원</td>
-                            <td class="${pnlClass}">${cols[8]}%</td>
-                            <td>${cols[9]}</td>
+                            <td><b>${item.symbol}</b></td>
+                            <td>${Number(item.price).toLocaleString()}원</td>
+                            <td>${squeezeBadge}</td>
+                            <td class="${momClass}">${Number(item.momentum).toFixed(2)}</td>
+                            <td>${item.eval_reason}</td>
                         `;
-                        tbody.appendChild(tr);
+                        scanTbody.appendChild(tr);
+                    });
+
+                    // 보유 포지션 업데이트
+                    if (status.active_position) {
+                        document.getElementById('active-symbol').innerText = status.active_position.symbol;
+                        document.getElementById('active-pos-info').innerText = `진입: ${Number(status.active_position.entry_price).toLocaleString()}원 | 손절: ${Number(status.active_position.stop_loss).toLocaleString()}원`;
+                    } else {
+                        document.getElementById('active-symbol').innerText = "관망 중 (WAIT)";
+                        document.getElementById('active-pos-info').innerText = "NONE";
                     }
-                });
-                document.getElementById('sync-time').innerText = new Date().toLocaleString();
+                }
+
+                // 2. 매매일지 CSV 호출
+                const journalRes = await fetch('logs/trade_journal.csv?t=' + new Date().getTime());
+                if (journalRes.ok) {
+                    const csvText = await journalRes.text();
+                    const rows = csvText.trim().split('\n').slice(1);
+                    const journalTbody = document.getElementById('journal-table-body');
+                    if (rows.length > 0 && rows[0] !== "") {
+                        journalTbody.innerHTML = '';
+                        rows.reverse().forEach(row => {
+                            const cols = row.split(',');
+                            if (cols.length >= 10) {
+                                const tr = document.createElement('tr');
+                                const pnl = parseFloat(cols[7]);
+                                const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+                                tr.innerHTML = `
+                                    <td>${cols[1]}</td>
+                                    <td><b>${cols[0]}</b></td>
+                                    <td>${Number(cols[2]).toLocaleString()}원</td>
+                                    <td>${Number(cols[6]).toLocaleString()}원</td>
+                                    <td class="${pnlClass}">${pnl > 0 ? '+' : ''}${pnl.toLocaleString()}원</td>
+                                    <td class="${pnlClass}">${cols[8]}%</td>
+                                    <td>${cols[9]}</td>
+                                    <td>${Number(cols[10]).toLocaleString()}원</td>
+                                `;
+                                journalTbody.appendChild(tr);
+                            }
+                        });
+                    }
+                }
             } catch (err) {
-                document.querySelector('#journal-table tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;">기록된 매매일지가 없습니다.</td></tr>`;
+                console.log("대시보드 동기화 대기 중...", err);
             }
         }
-        loadJournal();
+
+        // 5초마다 실시간 동기화
+        setInterval(updateDashboard, 5000);
+        updateDashboard();
     </script>
 </body>
 </html>
-
