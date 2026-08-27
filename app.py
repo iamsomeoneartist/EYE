@@ -1,189 +1,252 @@
+import asyncio
+import os
+import threading
 import time
 from datetime import datetime
+from flask import Flask
 import numpy as np
 import pandas as pd
 import requests
-import streamlit as st
 
 # ==========================================
-# 1. 설정 및 파라미터 (Settings & Config)
+# 1. UptimeRobot 전용 헬스체크 웹 서버
+# ==========================================
+web_app = Flask(__name__)
+
+@web_app.route('/')
+def health_check():
+    """UptimeRobot이 핑(Ping)을 보낼 웹 엔드포인트"""
+    return f"EYE System Active! Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 200
+
+def run_flask():
+    """웹 서버 스레드 실행"""
+    web_app.run(host='0.0.0.0', port=8080)
+
+# ==========================================
+# 2. 시스템 환경 및 리스크 파라미터 (Notebook 원칙)
 # ==========================================
 INITIAL_SEED = 100000.0        # 시드머니: 10만원
-MAX_RISK_PER_TRADE = 0.015     # 1회 최대 허용 손실율: 1.5% (1,500원)
-MIN_ORDER_VALUE = 5000.0       # 빗썸 최소 주문금액
-SLIPPAGE_RATE = 0.001          # 페이퍼 트레이딩 슬리피지 (0.1%)
+MAX_RISK_PER_TRADE = 0.015     # 1회 최대 허용 손실률: 1.5% (1,500원)
+MIN_ORDER_VALUE = 5000.0       # 빗썸 최소 주문금액 보정
+SLIPPAGE_RATE = 0.001          # 가상 슬리피지 (0.1%)
+TARGET_ALTS = ["XRP_KRW", "ITH_KRW", "SOL_KRW", "DOGE_KRW"]
 
-st.set_page_config(page_title="AI 코인 트레이더 대시보드", layout="wide")
+class EYETRADER:
+    def __init__(self):
+        self.balance = INITIAL_SEED
+        self.active_position = None
+        self.btc_status = "STABLE"
+        self.journal = []
 
-# ==========================================
-# 2. 데이터 수집 및 지표 엔진 (Data & Strategy)
-# ==========================================
-def fetch_bithumb_ohlcv(symbol="BTC_KRW", interval="15m", max_count=50):
-    """빗썸 REST API를 이용한 캔들 수집"""
-    try:
-        url = f"https://api.bithumb.com/public/candlestick/{symbol}/{interval}"
-        res = requests.get(url, timeout=5).json()
-        if res.get("status") == "0000":
-            data = res["data"][-max_count:]
-            df = pd.DataFrame(data, columns=["time", "open", "high", "low", "close", "volume"])
-            df["time"] = pd.to_datetime(df["time"].astype(int), unit="ms")
-            for col in ["open", "high", "low", "close", "volume"]:
-                df[col] = df[col].astype(float)
+    # --------------------------------------
+    # [Notebook 1. 시장 데이터 수집 모듈]
+    # --------------------------------------
+    def fetch_ohlcv(self, symbol, interval="15m", count=50):
+        """빗썸 가격, 캔들, 거래량 수집"""
+        try:
+            url = f"https://api.bithumb.com/public/candlestick/{symbol}/{interval}"
+            res = requests.get(url, timeout=3).json()
+            if res.get("status") == "0000":
+                df = pd.DataFrame(res["data"][-count:], columns=["time", "open", "high", "low", "close", "volume"])
+                df["time"] = pd.to_datetime(df["time"].astype(int), unit="ms")
+                for col in ["open", "high", "low", "close", "volume"]:
+                    df[col] = df[col].astype(float)
+                return df
+        except Exception as e:
+            print(f"[{datetime.now()}] [ERR] 데이터 수집 실패 ({symbol}): {e}")
+        return pd.DataFrame()
+
+    def fetch_binance_oi(self):
+        """바이낸스 선물 미결제약정(OI) 수집 (파생상품 데이터)"""
+        try:
+            url = "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT"
+            res = requests.get(url, timeout=3).json()
+            return float(res.get("openInterest", 0))
+        except:
+            return 0.0
+
+    # --------------------------------------
+    # [Notebook 2 & 3. 시장 분석 및 진입 신호 엔진]
+    # --------------------------------------
+    def analyze_strategy_signals(self, df):
+        """스퀴즈 모멘텀 지표 (변동성, 모멘텀, 지지/저항) 계산"""
+        if df.empty or len(df) < 20:
             return df
-    except Exception as e:
-        st.error(f"API 수집 에러 ({symbol}): {e}")
-    return pd.DataFrame()
+            
+        # 1. 볼린저 밴드 & 켈트너 채널
+        df['sma'] = df['close'].rolling(window=20).mean()
+        df['std'] = df['close'].rolling(window=20).std()
+        df['bb_upper'] = df['sma'] + (2.0 * df['std'])
+        df['bb_lower'] = df['sma'] - (2.0 * df['std'])
 
-def calculate_squeeze_momentum(df, bb_len=20, bb_mult=2.0, kc_len=20, kc_mult=1.5):
-    """Squeeze Momentum Indicator (LazyBear) 수식 계산"""
-    if df.empty or len(df) < kc_len:
+        df['tr'] = np.maximum(df['high'] - df['low'], 
+                              np.maximum(abs(df['high'] - df['close'].shift(1)), 
+                                         abs(df['low'] - df['close'].shift(1))))
+        df['atr'] = df['tr'].rolling(window=20).mean()
+        df['kc_upper'] = df['sma'] + (df['atr'] * 1.5)
+        df['kc_lower'] = df['sma'] - (df['atr'] * 1.5)
+
+        # 스퀴즈 상태 (True=검은점/에너지 응축, False=회색점/변동성 폭발)
+        df['squeeze_on'] = (df['bb_lower'] > df['kc_lower']) & (df['bb_upper'] < df['kc_upper'])
+
+        # 모멘텀 히스토그램
+        highest = df['high'].rolling(window=20).max()
+        lowest = df['low'].rolling(window=20).min()
+        df['val'] = df['close'] - (((highest + lowest) / 2 + df['sma']) / 2)
+        df['momentum'] = df['val'].rolling(window=20).mean()
         return df
 
-    # 볼린저 밴드
-    df['sma'] = df['close'].rolling(window=bb_len).mean()
-    df['std'] = df['close'].rolling(window=bb_len).std()
-    df['bb_upper'] = df['sma'] + (bb_mult * df['std'])
-    df['bb_lower'] = df['sma'] - (bb_mult * df['std'])
+    # --------------------------------------
+    # [Notebook 4. 리스크 관리 엔진]
+    # --------------------------------------
+    def calculate_position(self, entry_price, stop_loss):
+        """포지션 크기 = 허용 손실액 ÷ (진입가 - 손절가)"""
+        risk_per_unit = abs(entry_price - stop_loss)
+        if risk_per_unit == 0:
+            return 0.0
 
-    # 켈트너 채널
-    df['tr'] = np.maximum(df['high'] - df['low'], 
-                          np.maximum(abs(df['high'] - df['close'].shift(1)), 
-                                     abs(df['low'] - df['close'].shift(1))))
-    df['atr'] = df['tr'].rolling(window=kc_len).mean()
-    df['kc_upper'] = df['sma'] + (df['atr'] * kc_mult)
-    df['kc_lower'] = df['sma'] - (df['atr'] * kc_mult)
+        target_max_loss = self.balance * MAX_RISK_PER_TRADE  # 허용 손실액
+        calculated_quantity = target_max_loss / risk_per_unit
+        calculated_value = calculated_quantity * entry_price
 
-    # 스퀴즈 상태 (검은 점: True / 회색 점: False)
-    df['squeeze_on'] = (df['bb_lower'] > df['kc_lower']) & (df['bb_upper'] < df['kc_upper'])
+        # 최대 시드의 50% 제한 및 최소 주문금액 충족 보정
+        final_value = min(calculated_value, self.balance * 0.5)
+        return final_value if final_value >= MIN_ORDER_VALUE else 0.0
 
-    # 모멘텀
-    highest = df['high'].rolling(window=kc_len).max()
-    lowest = df['low'].rolling(window=kc_len).min()
-    m1 = (highest + lowest) / 2
-    df['val'] = df['close'] - ((m1 + df['sma']) / 2)
-    df['momentum'] = df['val'].rolling(window=kc_len).mean()
+    # --------------------------------------
+    # [Notebook 5. AI 트레이더 근거 평가 및 실행]
+    # --------------------------------------
+    def evaluate_and_execute(self, symbol):
+        """신호/리스크 검증 후 매수 조건 수렴 시 자동 실행"""
+        if self.active_position is not None:
+            return
 
-    return df
+        df = self.fetch_ohlcv(symbol, interval="15m")
+        df = self.analyze_strategy_signals(df)
+        if df.empty or len(df) < 2:
+            return
 
-# ==========================================
-# 3. 리스크 및 시뮬레이션 세션 관리
-# ==========================================
-if 'balance' not in st.session_state:
-    st.session_state.balance = INITIAL_SEED
-if 'active_position' not in st.session_state:
-    st.session_state.active_position = None
-if 'journal' not in st.session_state:
-    st.session_state.journal = []
+        curr = df.iloc[-1]
+        prev = df.iloc[-2]
 
-def evaluate_and_trade(df, symbol):
-    """지표 분석 및 리스크 계산 후 페이퍼 체결"""
-    if df.empty or len(df) < 2:
-        return "WAIT", "데이터 부족"
+        # 조건 1: BTC 급락(DUMP) 상태 제외
+        # 조건 2: 스퀴즈 해제 (에너지 응축 후 변동성 폭발)
+        # 조건 3: 모멘텀 0선 위 상향 확장
+        squeeze_released = prev['squeeze_on'] and not curr['squeeze_on']
+        momentum_bullish = (curr['momentum'] > 0) and (curr['momentum'] > prev['momentum'])
 
-    curr = df.iloc[-1]
-    prev = df.iloc[-2]
+        if squeeze_released and momentum_bullish and self.btc_status != "DUMP":
+            entry_price = curr['close'] * (1 + SLIPPAGE_RATE)
+            stop_loss = df['low'].iloc[-5:].min()  # 최근 5개 봉 최저가 손절
+            
+            position_size = self.calculate_position(entry_price, stop_loss)
+            if position_size > 0:
+                take_profit = entry_price + ((entry_price - stop_loss) * 2.0)  # 손익비(R:R) 1:2
 
-    squeeze_released = prev['squeeze_on'] and not curr['squeeze_on']
-    momentum_bullish = (curr['momentum'] > 0) and (curr['momentum'] > prev['momentum'])
+                self.active_position = {
+                    "symbol": symbol,
+                    "entry_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "entry_price": entry_price,
+                    "stop_loss": stop_loss,
+                    "take_profit": take_profit,
+                    "quantity": position_size / entry_price,
+                    "value": position_size,
+                    "reason": "스퀴즈 해제 + 0선 상향 모멘텀 폭발"
+                }
+                print(f"[{datetime.now()}] 🟢 [BUY] {symbol} | 진입가: {entry_price:,.1f}원 | 손절가: {stop_loss:,.1f}원 | 익절가: {take_profit:,.1f}원 | 포지션: {position_size:,.0f}원")
 
-    # 매수 신호 포착
-    if squeeze_released and momentum_bullish:
-        if st.session_state.active_position is not None:
-            return "HOLD", "기존 포지션 유지 중"
+    # --------------------------------------
+    # 실시간 모니터링 및 [Notebook 6. 매매일지]
+    # --------------------------------------
+    def monitor_active_position(self):
+        """1분 루프: 활성 포지션 실시간 감지 및 자동 청산"""
+        if self.active_position is None:
+            return
 
-        entry_price = curr['close'] * (1 + SLIPPAGE_RATE)
-        stop_loss = df['low'].iloc[-5:].min()
-        risk_per_share = entry_price - stop_loss
+        pos = self.active_position
+        df = self.fetch_ohlcv(pos['symbol'], interval="1m", count=2)
+        if df.empty:
+            return
 
-        if risk_per_share <= 0:
-            return "WAIT", "손절가 설정 오류"
+        curr_price = df.iloc[-1]['close']
 
-        # 리스크 엔진: 포지션 크기 = 허용 손실액 ÷ (진입가 - 손절가)
-        target_loss = st.session_state.balance * MAX_RISK_PER_TRADE
-        calc_qty = target_loss / risk_per_share
-        calc_value = calc_qty * entry_price
-
-        final_value = min(calc_value, st.session_state.balance * 0.5)
-        if final_value < MIN_ORDER_VALUE:
-            return "WAIT", "최소 주문금액 미달"
-
-        take_profit = entry_price + (risk_per_share * 2.0) # R:R 1:2
-
-        # 포지션 오픈
-        st.session_state.active_position = {
-            "symbol": symbol,
-            "entry_time": datetime.now().strftime("%H:%M:%S"),
-            "entry_price": entry_price,
-            "stop_loss": stop_loss,
-            "take_profit": take_profit,
-            "quantity": final_value / entry_price,
-            "value": final_value
-        }
-        return "BUY", f"{symbol} 가상 매수 체결 ({entry_price:.1f}원)"
-
-    # 포지션 감시 및 청산
-    pos = st.session_state.active_position
-    if pos and pos['symbol'] == symbol:
-        curr_price = curr['close']
         if curr_price <= pos['stop_loss']:
-            return close_position(curr_price, "STOP_LOSS")
+            self._close_position(curr_price, "STOP_LOSS (손절)")
         elif curr_price >= pos['take_profit']:
-            return close_position(curr_price, "TAKE_PROFIT")
+            self._close_position(curr_price, "TAKE_PROFIT (익절)")
 
-    return "WAIT", "신호 대기 중"
+    def _close_position(self, exit_price, reason):
+        """포지션 청산 및 매매일지 자동 저장"""
+        pos = self.active_position
+        exit_p = exit_price * (1 - SLIPPAGE_RATE)
+        pnl = (exit_p - pos['entry_price']) * pos['quantity']
+        pnl_pct = ((exit_p / pos['entry_price']) - 1) * 100
 
-def close_position(exit_price, reason):
-    pos = st.session_state.active_position
-    exit_p = exit_price * (1 - SLIPPAGE_RATE)
-    pnl = (exit_p - pos['entry_price']) * pos['quantity']
-    pnl_pct = ((exit_p / pos['entry_price']) - 1) * 100
+        self.balance += pnl
+        record = {
+            **pos,
+            "exit_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "exit_price": exit_p,
+            "pnl": round(pnl, 2),
+            "pnl_pct": round(pnl_pct, 2),
+            "reason": reason,
+            "balance_after": round(self.balance, 2)
+        }
+        self.journal.append(record)
+        print(f"[{datetime.now()}] 🔴 [SELL] {pos['symbol']} | 사유: {reason} | 손익: {pnl:+,.0f}원 ({pnl_pct:+.2f}%) | 잔고: {self.balance:,.0f}원")
+        self.active_position = None
 
-    st.session_state.balance += pnl
-    st.session_state.journal.append({
-        "시간": datetime.now().strftime("%H:%M:%S"),
-        "종목": pos['symbol'],
-        "진입가": round(pos['entry_price'], 1),
-        "청산가": round(exit_p, 1),
-        "손익(원)": round(pnl),
-        "수익률(%)": round(pnl_pct, 2),
-        "사유": reason
-    })
-    st.session_state.active_position = None
-    return "SELL", f"포지션 청산 완료 ({reason})"
+    def update_btc_macro(self):
+        """1시간 루프: BTC 추세 감시"""
+        df = self.fetch_ohlcv("BTC_KRW", interval="1h", count=24)
+        if not df.empty:
+            price_change = ((df.iloc[-1]['close'] / df.iloc[0]['close']) - 1) * 100
+            self.btc_status = "DUMP" if price_change < -3.0 else "STABLE"
+            print(f"[{datetime.now()}] 🔍 [BTC Macro] 추세 상태: {self.btc_status} (24H 변동률: {price_change:+.2f}%)")
 
 # ==========================================
-# 4. Streamlit UI 대시보드
+# 3. 24시간 비동기 태스크 스케줄러
 # ==========================================
-st.title("🤖 AI 코인 트레이더 대시보드 (Paper Trading)")
+bot = EYETRADER()
 
-# 상단 메트릭
-col1, col2, col3 = st.columns(3)
-col1.metric("가상 시드 잔고", f"{st.session_state.balance:,.0f} 원")
-col2.metric("활성 포지션", "1개" if st.session_state.active_position else "없음")
-col3.metric("누적 거래 횟수", f"{len(st.session_state.journal)}회")
+async def task_1min():
+    """1분 주기: 포지션 실시간 손절/익절 감시"""
+    while True:
+        bot.monitor_active_position()
+        await asyncio.sleep(60)
 
-st.markdown("---")
+async def task_15min():
+    """15분 주기: 스퀴즈 모멘텀 조건 수렴 스캐닝"""
+    while True:
+        for symbol in TARGET_ALTS:
+            bot.evaluate_and_execute(symbol)
+            await asyncio.sleep(1)
+        await asyncio.sleep(900)
 
-target_symbol = st.selectbox("감시 종목 선택 (빗썸 원화마켓)", ["XRP_KRW", "ITH_KRW", "SOL_KRW", "BTC_KRW"])
+async def task_1hour():
+    """1시간 주기: BTC 추세 업데이트 및 매매일지 백업"""
+    while True:
+        bot.update_btc_macro()
+        if bot.journal:
+            os.makedirs("logs", exist_ok=True)
+            pd.DataFrame(bot.journal).to_csv("logs/trade_journal.csv", index=False)
+        await asyncio.sleep(3600)
 
-if st.button("실시간 시장 데이터 갱신 및 신호 분석"):
-    df = fetch_bithumb_ohlcv(target_symbol)
-    df = calculate_squeeze_momentum(df)
-    action, msg = evaluate_and_trade(df, target_symbol)
+async def main():
+    print("🚀 EYE.py - 24시간 실시간 무인 코인 AI 트레이더 가동...")
+    bot.update_btc_macro()
+    await asyncio.gather(
+        task_1min(),
+        task_15min(),
+        task_1hour()
+    )
 
-    st.subheader(f"📊 {target_symbol} 상태 및 분석결과")
-    st.info(f"**AI 판단:** {action} - {msg}")
+if __name__ == "__main__":
+    # UptimeRobot 감시용 Flask 서버 스레드 시작
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
 
-    if not df.empty:
-        curr_row = df.iloc[-1]
-        c1, c2, c3 = st.columns(3)
-        c1.metric("현재가", f"{curr_row['close']:,} 원")
-        c2.metric("스퀴즈 상태", "에너지 응축 (ON)" if curr_row['squeeze_on'] else "변동성 폭발 (OFF)")
-        c3.metric("모멘텀 지표", f"{curr_row['momentum']:.4f}")
+    # 메인 비동기 루프 실행
+    asyncio.run(main())
 
-st.markdown("---")
-st.subheader("📜 페이퍼 트레이딩 매매일지")
-if st.session_state.journal:
-    st.dataframe(pd.DataFrame(st.session_state.journal), use_container_width=True)
-else:
-    st.write("아직 기록된 매매 내역이 없습니다.")
