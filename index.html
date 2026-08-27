@@ -1,246 +1,204 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EYE 20 AI Staff Trading System</title>
-    <style>
-        :root { 
-            --bg: #0d1117; --card-bg: #161b22; --border: #30363d; --text: #c9d1d9; 
-            --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; 
-            --p1-color: #1f6feb; --p2-color: #8957e5; --p3-color: #da3633; --p4-color: #238636;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding: 6px; font-size: 11px; line-height: 1.2; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; }
-        .header h1 { font-size: 13px; color: var(--accent); }
-        .badge { padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: bold; }
-        .bg-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid var(--green); }
-        .bg-red { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid var(--red); }
-        .bg-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sideline Dashboard</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --sub: #94a3b8;
+    --green: #10b981; --red: #ef4444; --blue: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, Roboto, sans-serif; background: var(--bg); color: var(--text);
+         padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 8px; border-bottom: 1px solid #334155; }
+  .header h1 { font-size: 1.1rem; color: var(--blue); }
+  .badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; }
+  .badge-live { background: rgba(239,68,68,0.2); color: var(--red); }
+  .badge-paper { background: rgba(16,185,129,0.2); color: var(--green); }
+  .card { background: var(--card); border-radius: 12px; padding: 16px;
+          display: flex; flex-direction: column; gap: 8px; }
+  .card-title { font-size: 0.8rem; color: var(--sub); text-transform: uppercase; }
+  .card-value { font-size: 1.4rem; font-weight: bold; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .status-buy { color: var(--green); }
+  .status-none { color: var(--sub); }
+  .note { font-size: 0.75rem; color: var(--sub); line-height: 1.4; }
 
-        /* 파티션(부서) 타이틀 */
-        .partition-header { font-size: 9.5px; font-weight: bold; padding: 2px 5px; margin: 5px 0 3px 0; border-radius: 3px; display: flex; justify-content: space-between; }
-        .p1-title { background: rgba(31, 111, 235, 0.2); color: #58a6ff; border-left: 3px solid var(--p1-color); }
-        .p2-title { background: rgba(137, 87, 229, 0.2); color: #a5d6ff; border-left: 3px solid var(--p2-color); }
-        .p3-title { background: rgba(218, 54, 51, 0.2); color: #ffa198; border-left: 3px solid var(--p3-color); }
-        .p4-title { background: rgba(35, 134, 54, 0.2); color: #7ee787; border-left: 3px solid var(--p4-color); }
-
-        /* 20인 고밀도 5컬럼 그리드 (세로모드 최적화) */
-        .staff-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 4px; }
-        .staff-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 2px; text-align: center; font-size: 8.5px; cursor: pointer; }
-        .staff-card:active { background: #21262d; border-color: var(--accent); }
-        .staff-icon { font-size: 13px; display: block; margin-bottom: 1px; }
-        .staff-role { font-size: 8px; color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .staff-val { font-size: 9px; font-weight: bold; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .pos { color: var(--green); } .neg { color: var(--red); }
-
-        /* 테이블 공통 */
-        .section-title { font-size: 10px; font-weight: bold; color: var(--accent); margin: 6px 0 3px 0; border-left: 3px solid var(--accent); padding-left: 4px; }
-        table { width: 100%; border-collapse: collapse; background: var(--card-bg); font-size: 9px; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
-        th, td { padding: 3px 2px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        th { background: #21262d; color: #8b949e; font-size: 8px; }
-
-        /* 모달 팝업 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-card { background: var(--card-bg); border: 1px solid var(--accent); border-radius: 8px; width: 90%; max-width: 320px; padding: 10px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; }
-        .modal-title { font-size: 12px; font-weight: bold; color: var(--accent); }
-        .modal-close { font-size: 14px; color: #8b949e; cursor: pointer; }
-        .modal-body { font-size: 10px; line-height: 1.4; color: var(--text); }
-        .modal-report { background: #0d1117; padding: 6px; border-radius: 4px; border: 1px solid var(--border); margin-top: 4px; font-size: 9.5px; }
-    </style>
+  .section-title { font-size: 0.95rem; font-weight: bold; color: var(--text);
+                    margin-top: 4px; display: flex; justify-content: space-between; align-items: center; }
+  .section-sub { font-size: 0.75rem; color: var(--sub); font-weight: normal; }
+  .role-list { display: flex; flex-direction: column; gap: 6px; }
+  .role-row { background: var(--card); border-radius: 10px; padding: 10px 12px;
+              display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .role-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .role-name { font-size: 0.85rem; font-weight: 600; }
+  .role-task { font-size: 0.7rem; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .role-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-done { background: var(--green); }
+  .dot-pending { background: #f59e0b; }
+  .dot-blocked { background: var(--red); }
+  .progress-bar-wrap { background: #334155; border-radius: 8px; height: 8px; overflow: hidden; }
+  .progress-bar-fill { background: var(--blue); height: 100%; }
+  .legend { display: flex; gap: 12px; font-size: 0.7rem; color: var(--sub); flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .scan-row { background: var(--card); border-radius: 8px; padding: 8px 10px;
+              display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.75rem; }
+  .scan-symbol { font-weight: bold; }
+  .scan-reason { color: var(--sub); text-align: right; }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>🚀 EYE AI 20인 전문 트레이딩 본부</h1>
-        <span class="badge bg-green">20/20 ONLINE</span>
+
+<div class="header">
+  <h1>📱 Eye Pipeline</h1>
+  <span id="modeBadge" class="badge badge-paper">PAPER</span>
+</div>
+
+<div class="card">
+  <div class="card-title">Position</div>
+  <div class="card-value status-none" id="targetSymbol">-</div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Entry Price</div>
+    <div class="card-value" style="font-size:1.1rem" id="buyPrice">0 KRW</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Highest Price</div>
+    <div class="card-value" style="font-size:1.1rem;color:var(--green)" id="highPrice">0 KRW</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Balance (실제 계산값)</div>
+  <div class="card-value" id="balanceVal" style="color:var(--green)">0 KRW</div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Daily Trades</div>
+    <div class="card-value" style="font-size:1.1rem" id="tradeCount">0/2</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Daily Losses</div>
+    <div class="card-value" style="font-size:1.1rem" id="lossCount">0/2</div>
+  </div>
+</div>
+
+<div class="section-title">🔍 최근 스캔 근거<span class="section-sub" id="scanTime">-</span></div>
+<div class="role-list" id="scanList"></div>
+
+<div class="card">
+  <div class="card-title">Last Updated</div>
+  <div style="font-size:0.85rem;color:var(--sub)" id="lastUpdated">-</div>
+</div>
+
+<div class="section-title">
+  🧩 Team Role Status
+  <span class="section-sub" id="progressLabel">0/16 완료</span>
+</div>
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="legend">
+  <span><span class="role-dot dot-done"></span>완료</span>
+  <span><span class="role-dot dot-pending"></span>대기</span>
+  <span><span class="role-dot dot-blocked"></span>차단됨(입력 필요)</span>
+</div>
+
+<div class="role-list" id="roleList"></div>
+
+<div class="note">
+  ⚠️ 이 페이지는 GitHub Pages(공개) 저장소에서 호스팅됩니다. state.json이 공개되면
+  보유 종목·진입가·매매 이력이 누구에게나 노출됩니다. 비공개로 운영하려면
+  GitHub Pro/Team의 Private Pages를 쓰거나, 이 대시보드를 별도의 인증된 서버로 옮기세요.
+</div>
+
+<script>
+// 실제 구현 상태만 반영 (가짜 매매 성과 수치 아님)
+const TEAM_ROLES = [
+  { name: "CEO · 수석 트레이더", task: "전략 설계(스퀴즈+RSI+ADX)", status: "done" },
+  { name: "CPO · 컴플라이언스", task: "규정/약관 검토", status: "pending" },
+  { name: "CFO · 세무", task: "수수료 22% 보정 손익비", status: "pending" },
+  { name: "퀀트 A · 지표", task: "스퀴즈/RSI 로직", status: "done" },
+  { name: "퀀트 B · SMC", task: "돌파(Breakout) 필터", status: "done" },
+  { name: "ML 리서처", task: "적응형 파라미터", status: "pending" },
+  { name: "리스크 C · 손절/사이징", task: "ATR 동적 손절+Breakeven Lock", status: "done" },
+  { name: "리스크 D · 슬리피지/이벤트", task: "유의종목 자동 청산", status: "done" },
+  { name: "스크리너 E · 변동성", task: "거래대금 상위 스크리닝", status: "done" },
+  { name: "스크리너 F · 뉴스/악재", task: "실시간 공지 크롤링", status: "blocked" },
+  { name: "시스템 아키텍트", task: "워크플로우 동시성/권한", status: "done" },
+  { name: "데이터 엔지니어", task: "틱데이터 DB/백테스트 엔진", status: "pending" },
+  { name: "프론트엔드", task: "모바일 대시보드", status: "done" },
+  { name: "DevOps", task: "GitHub Actions 파이프라인", status: "done" },
+  { name: "AI 비서", task: "디스코드 실시간 보고", status: "done" },
+  { name: "백테스트 데이터 담당 (신규)", task: "실제 30일 성과 검증", status: "blocked" },
+];
+
+function renderRoles() {
+  const list = document.getElementById('roleList');
+  const dotClass = { done: "dot-done", pending: "dot-pending", blocked: "dot-blocked" };
+  list.innerHTML = TEAM_ROLES.map(r => `
+    <div class="role-row">
+      <div class="role-info">
+        <div class="role-name">${r.name}</div>
+        <div class="role-task">${r.task}</div>
+      </div>
+      <div class="role-dot ${dotClass[r.status]}"></div>
     </div>
+  `).join('');
 
-    <!-- PARTITION 1 -->
-    <div class="partition-header p1-title"><span>PARTITION 1. 시장 데이터 본부</span><span>[DATA]</span></div>
-    <div class="staff-grid">
-        <div class="staff-card" onclick="openReport(1, '👨‍💻 1. 가격 데이터 수집원')"><span class="staff-icon">👨‍💻</span><div class="staff-role">1. 가격</div><div class="staff-val pos">정상</div></div>
-        <div class="staff-card" onclick="openReport(2, '👩‍💻 2. 거래량 분석원')"><span class="staff-icon">👩‍💻</span><div class="staff-role">2. 거래량</div><div class="staff-val">수집중</div></div>
-        <div class="staff-card" onclick="openReport(3, '🧑‍💻 3. 펀딩비 추적원')"><span class="staff-icon">🧑‍💻</span><div class="staff-role">3. 펀딩비</div><div class="staff-val pos">정상</div></div>
-        <div class="staff-card" onclick="openReport(4, '👨‍💼 4. OI 미결제약정 담당')"><span class="staff-icon">👨‍💼</span><div class="staff-role">4. OI약정</div><div class="staff-val" id="s4-val">-</div></div>
-        <div class="staff-card" onclick="openReport(5, '👩‍💼 5. 온체인/청산 데이터원')"><span class="staff-icon">👩‍💼</span><div class="staff-role">5. 온체인</div><div class="staff-val pos">정상</div></div>
-    </div>
+  const doneCount = TEAM_ROLES.filter(r => r.status === "done").length;
+  document.getElementById('progressLabel').innerText = `${doneCount}/${TEAM_ROLES.length} 완료`;
+  document.getElementById('progressFill').style.width = `${(doneCount / TEAM_ROLES.length) * 100}%`;
+}
+renderRoles();
 
-    <!-- PARTITION 2 -->
-    <div class="partition-header p2-title"><span>PARTITION 2. 시장 구조 분석팀</span><span>[ANALYSIS]</span></div>
-    <div class="staff-grid">
-        <div class="staff-card" onclick="openReport(6, '👷‍♂️ 6. 추세 판별원')"><span class="staff-icon">👷‍♂️</span><div class="staff-role">6. 추세</div><div class="staff-val">횡보</div></div>
-        <div class="staff-card" onclick="openReport(7, '👩‍🔬 7. 지지·저항 탐색원')"><span class="staff-icon">👩‍🔬</span><div class="staff-role">7. 지지저항</div><div class="staff-val">탐색중</div></div>
-        <div class="staff-card" onclick="openReport(8, '👨‍🔬 8. 변동성 측정원')"><span class="staff-icon">👨‍🔬</span><div class="staff-role">8. 변동성</div><div class="staff-val">스퀴즈</div></div>
-        <div class="staff-card" onclick="openReport(9, '🕵️‍♂️ 9. BTC 거시 분석가')"><span class="staff-icon">🕵️‍♂️</span><div class="staff-role">9. BTC거시</div><div class="staff-val" id="s9-val">STABLE</div></div>
-        <div class="staff-card" onclick="openReport(10, '🕵️‍♀️ 10. 유동성 구간 분석원')"><span class="staff-icon">🕵️‍♀️</span><div class="staff-role">10. 유동성</div><div class="staff-val pos">확인</div></div>
-    </div>
+async function updateDashboard() {
+  try {
+    const res = await fetch('../state.json?t=' + Date.now());
+    const data = await res.json();
 
-    <!-- PARTITION 3 -->
-    <div class="partition-header p3-title"><span>PARTITION 3. 전략 & 리스크 관리소</span><span>[RISK]</span></div>
-    <div class="staff-grid">
-        <div class="staff-card" onclick="openReport(11, '👨‍🎨 11. 스퀴즈 전략가')"><span class="staff-icon">👨‍🎨</span><div class="staff-role">11. 스퀴즈</div><div class="staff-val pos">대기중</div></div>
-        <div class="staff-card" onclick="openReport(12, '👩‍🎨 12. 모멘텀 검증원')"><span class="staff-icon">👩‍🎨</span><div class="staff-role">12. 모멘텀</div><div class="staff-val">스캔중</div></div>
-        <div class="staff-card" onclick="openReport(13, '👨‍⚖️ 13. 손익비(R:R) 계산원')"><span class="staff-icon">👨‍⚖️</span><div class="staff-role">13. 손익비</div><div class="staff-val">1:2.0</div></div>
-        <div class="staff-card" onclick="openReport(14, '👩‍⚖️ 14. 리스크 통제관')"><span class="staff-icon">👩‍⚖️</span><div class="staff-role">14. 리스크</div><div class="staff-val neg">Max 1.5%</div></div>
-        <div class="staff-card" onclick="openReport(15, '👨‍💻 15. 레버리지·청산 계산원')"><span class="staff-icon">👨‍💻</span><div class="staff-role">15. 레버리지</div><div class="staff-val">안전권</div></div>
-    </div>
+    const symbolElem = document.getElementById('targetSymbol');
+    const modeBadge = document.getElementById('modeBadge');
 
-    <!-- PARTITION 4 -->
-    <div class="partition-header p4-title"><span>PARTITION 4. 트레이딩 & 검증 본부</span><span>[EXECUTION]</span></div>
-    <div class="staff-grid">
-        <div class="staff-card" onclick="openReport(16, '👨‍✈️ 16. AI 수석 트레이더')"><span class="staff-icon">👨‍✈️</span><div class="staff-role">16. AI수석</div><div class="staff-val" id="s16-val">WAIT</div></div>
-        <div class="staff-card" onclick="openReport(17, '👩‍✈️ 17. 포지션 감시원')"><span class="staff-icon">👩‍✈️</span><div class="staff-role">17. 감시원</div><div class="staff-val" id="s17-val">NONE</div></div>
-        <div class="staff-card" onclick="openReport(18, '⚡ 18. 슬리피지·주문 실행원')"><span class="staff-icon">⚡</span><div class="staff-role">18. 체결원</div><div class="staff-val pos">대기</div></div>
-        <div class="staff-card" onclick="openReport(19, '📝 19. 매매일지 기록원')"><span class="staff-icon">📝</span><div class="staff-role">19. 매매일지</div><div class="staff-val pos">대기</div></div>
-        <div class="staff-card" onclick="openReport(20, '👩‍💻 20. 백테스트 검증원')"><span class="staff-icon">👩‍💻</span><div class="staff-role">20. 백테스트</div><div class="staff-val pos">완료</div></div>
-    </div>
+    if (data.position === "BUY") {
+      symbolElem.innerText = `BUY : ${data.target_symbol}`;
+      symbolElem.className = "card-value status-buy";
+    } else {
+      symbolElem.innerText = "SEARCHING";
+      symbolElem.className = "card-value status-none";
+    }
 
-    <!-- 스캔 및 매매일지 테이블 -->
-    <div class="section-title">🔍 타겟 종목 스캔 현황</div>
-    <table>
-        <thead><tr><th>종목</th><th>현재가</th><th>Squeeze</th><th>Momentum</th><th>AI 평가</th></tr></thead>
-        <tbody id="scan-tbody"><tr><td colspan="5" style="color:#8b949e;">데이터 동기화 중...</td></tr></tbody>
-    </table>
+    document.getElementById('buyPrice').innerText = `${(data.buy_price || 0).toLocaleString()} ₩`;
+    document.getElementById('highPrice').innerText = `${(data.highest_price || 0).toLocaleString()} ₩`;
+    document.getElementById('tradeCount').innerText = `${data.daily_trade_count || 0}/2`;
+    document.getElementById('lossCount').innerText = `${data.daily_loss_count || 0}/2`;
+    document.getElementById('balanceVal').innerText = `${Math.round(data.balance || 0).toLocaleString()} ₩`;
 
-    <div class="section-title">📊 최근 매매일지 (Trade Journal)</div>
-    <table>
-        <thead><tr><th>시간</th><th>종목</th><th>진입가</th><th>손익(원)</th><th>수익률</th><th>사유</th></tr></thead>
-        <tbody id="journal-tbody"><tr><td colspan="6" style="color:#8b949e;">매매 기록이 없습니다.</td></tr></tbody>
-    </table>
-
-    <!-- 모달 -->
-    <div id="report-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div id="modal-title" class="modal-title">직원 보고서</div>
-                <div class="modal-close" onclick="closeModalDirect()">✕</div>
-            </div>
-            <div class="modal-body" id="modal-body">로딩 중...</div>
+    const scanList = document.getElementById('scanList');
+    const scans = data.last_scan || [];
+    if (scans.length === 0) {
+      scanList.innerHTML = `<div class="scan-row"><span class="scan-reason">스캔 데이터 없음</span></div>`;
+    } else {
+      scanList.innerHTML = scans.map(s => `
+        <div class="scan-row">
+          <span class="scan-symbol">${s.symbol.replace('_KRW','')}</span>
+          <span class="scan-reason">${s.reason}</span>
         </div>
-    </div>
+      `).join('');
+    }
 
-    <script>
-        function openReport(id, name) {
-            const modal = document.getElementById('report-modal');
-            const title = document.getElementById('modal-title');
-            const body = document.getElementById('modal-body');
-            title.innerText = name;
-
-            if (id === 20) {
-                body.innerHTML = `
-                    <p><b>[백테스트 및 성과 검증 보고서]</b></p>
-                    <div class="modal-report">
-                        • <b>검증 대상</b>: Squeeze Momentum Breakout<br>
-                        • <b>총 거래 횟수</b>: 142회 | <b>승률</b>: <span class="pos">64.8%</span><br>
-                        • <b>손익비 (R:R)</b>: <span class="pos">1 : 2.0</span> | <b>MDD</b>: <span class="neg">-4.2%</span><br>
-                        • <b>평균 손익</b>: +3,000원 / -1,500원<br>
-                        • <b>결론</b>: 1.5% 리스크 제어 규정 준수 완료
-                    </div>`;
-            } else if (id === 5) {
-                body.innerHTML = `
-                    <p><b>[온체인 & 파생상품 데이터 보고]</b></p>
-                    <div class="modal-report">
-                        • <b>거래소 순유입/유출</b>: 중립<br>
-                        • <b>청산 맵 유동성</b>: 상방 롱스퀴즈 구간 형성 중<br>
-                        • <b>옵션 변동성 Index</b>: 안정적
-                    </div>`;
-            } else if (id === 18) {
-                body.innerHTML = `
-                    <p><b>[주문 실행 & 슬리피지 관리]</b></p>
-                    <div class="modal-report">
-                        • <b>주문 방식</b>: 지정가/시장가 자동 최적화<br>
-                        • <b>최대 허용 슬리피지</b>: 0.05% 제한<br>
-                        • <b>체결 준비</b>: 이상 없음
-                    </div>`;
-            } else {
-                body.innerHTML = `
-                    <p><b>[실시간 파티션 업무 보고]</b></p>
-                    <div class="modal-report">
-                        • <b>담당 파티션</b>: 정상 가동 중<br>
-                        • <b>동기화 주기</b>: 3초 인터벌<br>
-                        • <b>오류/경고</b>: 없음 (정상)
-                    </div>`;
-            }
-            modal.style.display = 'flex';
-        }
-
-        function closeModal(e) { if (e.target.id === 'report-modal') document.getElementById('report-modal').style.display = 'none'; }
-        function closeModalDirect() { document.getElementById('report-modal').style.display = 'none'; }
-
-        async function updateDashboard() {
-            try {
-                const res = await fetch('logs/status.json?t=' + new Date().getTime());
-                if (res.ok) {
-                    const data = await res.json();
-                    document.getElementById('s4-val').innerText = Math.round(data.binance_oi / 1000) + 'K';
-                    document.getElementById('s9-val').innerText = data.btc_status;
-                    document.getElementById('s9-val').className = 'staff-val ' + (data.btc_status === 'DUMP' ? 'neg' : 'pos');
-                    
-                    if (data.active_position) {
-                        document.getElementById('s16-val').innerText = "매수진입";
-                        document.getElementById('s16-val').className = "staff-val pos";
-                        document.getElementById('s17-val').innerText = data.active_position.symbol.split('_')[0];
-                        document.getElementById('s17-val').className = "staff-val pos";
-                    } else {
-                        document.getElementById('s16-val').innerText = "WAIT";
-                        document.getElementById('s16-val').className = "staff-val";
-                        document.getElementById('s17-val').innerText = "NONE";
-                        document.getElementById('s17-val').className = "staff-val";
-                    }
-
-                    const scanTbody = document.getElementById('scan-tbody');
-                    scanTbody.innerHTML = '';
-                    data.scan_results.forEach(item => {
-                        const tr = document.createElement('tr');
-                        const sqBadge = item.squeeze_on ? `<span class="badge bg-yellow">응축</span>` : `<span class="badge bg-green">폭발</span>`;
-                        const momClass = item.momentum > 0 ? 'pos' : 'neg';
-                        tr.innerHTML = `
-                            <td><b>${item.symbol.split('_')[0]}</b></td>
-                            <td>${Number(item.price).toLocaleString()}</td>
-                            <td>${sqBadge}</td>
-                            <td class="${momClass}">${Number(item.momentum).toFixed(2)}</td>
-                            <td style="font-size:8px; color:#8b949e;">${item.eval_reason}</td>
-                        `;
-                        scanTbody.appendChild(tr);
-                    });
-                }
-
-                const jRes = await fetch('logs/trade_journal.csv?t=' + new Date().getTime());
-                if (jRes.ok) {
-                    const csvText = await jRes.text();
-                    const rows = csvText.trim().split('\n').slice(1);
-                    const jTbody = document.getElementById('journal-tbody');
-                    if (rows.length > 0 && rows[0] !== "") {
-                        jTbody.innerHTML = '';
-                        rows.reverse().slice(0, 3).forEach(row => {
-                            const cols = row.split(',');
-                            if (cols.length >= 10) {
-                                const tr = document.createElement('tr');
-                                const pnl = parseFloat(cols[7]);
-                                const pnlClass = pnl >= 0 ? 'pos' : 'neg';
-                                const timeStr = cols[5].split(' ')[1] || cols[5];
-                                tr.innerHTML = `
-                                    <td style="color:#8b949e;">${timeStr}</td>
-                                    <td><b>${cols[0].split('_')[0]}</b></td>
-                                    <td>${Number(cols[2]).toLocaleString()}</td>
-                                    <td class="${pnlClass}">${pnl > 0 ? '+' : ''}${pnl.toLocaleString()}</td>
-                                    <td class="${pnlClass}">${cols[8]}%</td>
-                                    <td style="font-size:8px;">${cols[9]}</td>
-                                `;
-                                jTbody.appendChild(tr);
-                            }
-                        });
-                    }
-                }
-            } catch (err) {}
-        }
-
-        setInterval(updateDashboard, 3000);
-        updateDashboard();
-    </script>
+    document.getElementById('lastUpdated').innerText = new Date().toLocaleString('ko-KR');
+  } catch (err) {
+    document.getElementById('lastUpdated').innerText = "state.json 로드 실패";
+  }
+}
+updateDashboard();
+setInterval(updateDashboard, 10000);
+</script>
 </body>
 </html>
-
