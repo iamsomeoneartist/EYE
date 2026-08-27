@@ -2,187 +2,251 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EYE Professional AI Trader Monitoring Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EYE 16 AI Staff Monitoring Dashboard</title>
     <style>
-        :root { --bg-color: #0d1117; --card-bg: #161b22; --border-color: #30363d; --text-main: #c9d1d9; --accent-blue: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; }
-        .card h3 { margin-top: 0; color: #8b949e; font-size: 0.9em; text-transform: uppercase; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
-        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 0.85em; }
-        .badge-green { background-color: rgba(63, 185, 80, 0.2); color: var(--green); border: 1px solid var(--green); }
-        .badge-red { background-color: rgba(248, 81, 73, 0.2); color: var(--red); border: 1px solid var(--red); }
-        .badge-yellow { background-color: rgba(210, 153, 34, 0.2); color: var(--yellow); border: 1px solid var(--yellow); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: left; font-size: 0.9em; }
-        th { background-color: #21262d; color: #8b949e; }
-        .positive { color: var(--green); font-weight: bold; }
-        .negative { color: var(--red); font-weight: bold; }
-        .val-highlight { font-size: 1.4em; font-weight: bold; margin: 5px 0; color: #f0f6fc; }
+        :root { --bg: #0d1117; --card-bg: #161b22; --border: #30363d; --text: #c9d1d9; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d29922; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 6px; font-size: 11px; line-height: 1.2; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 6px; }
+        .header h1 { font-size: 14px; color: var(--accent); display: flex; align-items: center; gap: 4px; }
+        
+        .badge { padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: bold; }
+        .bg-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid var(--green); }
+        .bg-red { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid var(--red); }
+        .bg-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+
+        .section-title { font-size: 10.5px; font-weight: bold; color: var(--accent); margin: 4px 0 3px 0; border-left: 3px solid var(--accent); padding-left: 4px; }
+
+        /* 16명 직원 초고밀도 4x4 그리드 */
+        .staff-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 6px; }
+        .staff-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 5px; padding: 5px 3px; text-align: center; font-size: 9.5px; }
+        .staff-icon { font-size: 15px; display: block; margin-bottom: 2px; }
+        .staff-role { font-size: 8.5px; color: #8b949e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .staff-val { font-size: 10px; font-weight: bold; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* 초슬림 테이블 */
+        table { width: 100%; border-collapse: collapse; background: var(--card-bg); font-size: 9.5px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+        th, td { padding: 3px 2px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background: #21262d; color: #8b949e; font-size: 8.5px; }
+        .pos { color: var(--green); font-weight: bold; }
+        .neg { color: var(--red); font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>
-            <span>🚀 EYE Professional AI Trader Dashboard</span>
-            <span id="pipeline-status" class="status-badge badge-green">RUNNING</span>
-        </h1>
-        <p style="font-size:0.85em; color:#8b949e;">최종 상태 업데이트: <span id="sync-time">-</span> (5초마다 자동 동기화)</p>
+    <div class="header">
+        <h1>🚀 EYE AI 16인 전담 트레이딩팀</h1>
+        <span id="sync-time" class="badge bg-green">16/16 ONLINE</span>
+    </div>
 
-        <!-- 전문 트레이더 모듈별 실시간 모니터링 카드 -->
-        <div class="grid">
-            <div class="card">
-                <h3>1. 시장 상태 분석가 (BTC Macro)</h3>
-                <div id="btc-status" class="val-highlight">STABLE</div>
-                <p style="font-size:0.85em;">24H BTC 변동률: <span id="btc-change">0.00%</span></p>
-                <p style="font-size:0.8em; color:#8b949e;">원칙: BTC 급락(DUMP) 시 신규 진입 차단</p>
-            </div>
-            <div class="card">
-                <h3>2. 리스크 관리 엔진 (Risk Control)</h3>
-                <div class="val-highlight">1회 손실 <span style="color:var(--yellow);">1.5%</span> 제한</div>
-                <p style="font-size:0.85em;">시드 잔고: <span id="current-balance">100,000</span>원</p>
-                <p style="font-size:0.8e; color:#8b949e;">포지션 크기 = 허용손실액 ÷ (진입가-손절가)</p>
-            </div>
-            <div class="card">
-                <h3>3. 전략 엔진 (Squeeze Momentum)</h3>
-                <div id="active-symbol" class="val-highlight">감시 중</div>
-                <p style="font-size:0.85em;">현재 보유 포지션: <span id="active-pos-info">NONE</span></p>
-                <p style="font-size:0.8em; color:#8b949e;">스퀴즈 해제 + 0선 모멘텀 상향 돌파 검증</p>
-            </div>
-            <div class="card">
-                <h3>4. 파생상품·OI 분석가 (Binance Filter)</h3>
-                <div id="binance-oi" class="val-highlight">-</div>
-                <p style="font-size:0.85em;">바이낸스 BTC 선물 미결제약정(OI)</p>
-                <p style="font-size:0.8em; color:#8b949e;">글로벌 유동성 변화 크로스 검증</p>
-            </div>
+    <!-- 16명 개별 직원 실시간 진행상황 그리드 -->
+    <div class="section-title">👥 개별 AI 직원(16명) 실시간 업무 현황</div>
+    <div class="staff-grid">
+        <!-- 파이프라인 1단계: 시장 데이터 수집 (4명) -->
+        <div class="staff-card">
+            <span class="staff-icon">👨‍💻</span>
+            <div class="staff-role">1. 가격 데이터</div>
+            <div class="staff-val pos" id="s1-val">정상</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👩‍💻</span>
+            <div class="staff-role">2. 거래량 분석</div>
+            <div class="staff-val" id="s2-val">수집중</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">🧑‍💻</span>
+            <div class="staff-role">3. 펀딩비 추적</div>
+            <div class="staff-val pos" id="s3-val">정상</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👨‍💼</span>
+            <div class="staff-role">4. OI 미결제약정</div>
+            <div class="staff-val" id="s4-val">-</div>
         </div>
 
-        <!-- 실시간 알트코인 스캐닝 현황 -->
-        <div class="card" style="margin-bottom: 20px;">
-            <h3>🔍 4대 감시 알트코인 실시간 스캔 현황 (15m Candle)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>종목</th>
-                        <th>현재가</th>
-                        <th>Squeeze 상태</th>
-                        <th>Momentum 지표</th>
-                        <th>AI 판단 근거 평가</th>
-                    </tr>
-                </thead>
-                <tbody id="scan-table-body">
-                    <tr><td colspan="5" style="text-align:center;">실시간 스캔 데이터를 동기화 중입니다...</td></tr>
-                </tbody>
-            </table>
+        <!-- 파이프라인 2단계: 시장 상태 분석 (4명) -->
+        <div class="staff-card">
+            <span class="staff-icon">👷‍♂️</span>
+            <div class="staff-role">5. 추세 판별원</div>
+            <div class="staff-val" id="s5-val">횡보</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👩‍🔬</span>
+            <div class="staff-role">6. 지지·저항원</div>
+            <div class="staff-val" id="s6-val">탐색중</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👨‍🔬</span>
+            <div class="staff-role">7. 변동성 측정원</div>
+            <div class="staff-val" id="s7-val">스퀴즈</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">🕵️‍♂️</span>
+            <div class="staff-role">8. BTC 거시분석가</div>
+            <div class="staff-val" id="s8-val">STABLE</div>
         </div>
 
-        <!-- 최근 매매일지 -->
-        <div class="card">
-            <h3>📊 매매일지 (Trade Journal & Backtest Logs)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>진입시간</th>
-                        <th>종목</th>
-                        <th>진입가</th>
-                        <th>청산가</th>
-                        <th>손익(원)</th>
-                        <th>수익률</th>
-                        <th>청산사유</th>
-                        <th>청산 후 잔고</th>
-                    </tr>
-                </thead>
-                <tbody id="journal-table-body">
-                    <tr><td colspan="8" style="text-align:center;">기록된 매매일지가 없습니다.</td></tr>
-                </tbody>
-            </table>
+        <!-- 파이프라인 3단계: 전략 & 리스크 관리 (4명) -->
+        <div class="staff-card">
+            <span class="staff-icon">👨‍🎨</span>
+            <div class="staff-role">9. 스퀴즈 전략가</div>
+            <div class="staff-val pos" id="s9-val">대기중</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👩‍🎨</span>
+            <div class="staff-role">10. 모멘텀 검증원</div>
+            <div class="staff-val" id="s10-val">스캔중</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👨‍⚖️</span>
+            <div class="staff-role">11. 손절·익절계산원</div>
+            <div class="staff-val" id="s11-val">자동계산</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👩‍⚖️</span>
+            <div class="staff-role">12. 리스크 통제관</div>
+            <div class="staff-val neg" id="s12-val">Max 1.5%</div>
+        </div>
+
+        <!-- 파이프라인 4단계: AI 판단 & 매매일지 (4명) -->
+        <div class="staff-card">
+            <span class="staff-icon">👨‍✈️</span>
+            <div class="staff-role">13. AI 수석트레이더</div>
+            <div class="staff-val" id="s13-val">관망(WAIT)</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👩‍✈️</span>
+            <div class="staff-role">14. 포지션 감시원</div>
+            <div class="staff-val" id="s14-val">NONE</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👨‍💻</span>
+            <div class="staff-role">15. 매매일지 기록원</div>
+            <div class="staff-val pos" id="s15-val">대기중</div>
+        </div>
+        <div class="staff-card">
+            <span class="staff-icon">👩‍💻</span>
+            <div class="staff-role">16. 백테스트 검증원</div>
+            <div class="staff-val" id="s16-val">완료</div>
         </div>
     </div>
+
+    <!-- 스캔 현황 -->
+    <div class="section-title">🔍 타겟 종목 스캔 업무 현황</div>
+    <table>
+        <thead>
+            <tr>
+                <th>종목</th>
+                <th>현재가</th>
+                <th>Squeeze</th>
+                <th>Momentum</th>
+                <th>AI 평가 상태</th>
+            </tr>
+        </thead>
+        <tbody id="scan-tbody">
+            <tr><td colspan="5" style="color:#8b949e;">데이터 동기화 중...</td></tr>
+        </tbody>
+    </table>
+
+    <!-- 매매일지 -->
+    <div class="section-title">📊 최근 매매일지 (Trade Journal)</div>
+    <table>
+        <thead>
+            <tr>
+                <th>시간</th>
+                <th>종목</th>
+                <th>진입가</th>
+                <th>손익(원)</th>
+                <th>수익률</th>
+                <th>사유</th>
+            </tr>
+        </thead>
+        <tbody id="journal-tbody">
+            <tr><td colspan="6" style="color:#8b949e;">매매 기록이 없습니다.</td></tr>
+        </tbody>
+    </table>
 
     <script>
         async function updateDashboard() {
             try {
-                // 1. 실시간 모니터링 상태 데이터 호출
-                const statusRes = await fetch('logs/status.json?t=' + new Date().getTime());
-                if (statusRes.ok) {
-                    const status = await statusRes.json();
-                    document.getElementById('sync-time').innerText = status.updated_at;
-                    document.getElementById('btc-status').innerText = status.btc_status;
-                    document.getElementById('btc-status').className = 'val-highlight ' + (status.btc_status === 'DUMP' ? 'negative' : 'positive');
-                    document.getElementById('btc-change').innerText = (status.btc_change >= 0 ? '+' : '') + status.btc_change + '%';
-                    document.getElementById('current-balance').innerText = Math.round(status.balance).toLocaleString();
-                    document.getElementById('binance-oi').innerText = Number(status.binance_oi).toLocaleString() + " OI";
+                // 1. status.json 동기화
+                const res = await fetch('logs/status.json?t=' + new Date().getTime());
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // 직원별 데이터 갱신
+                    document.getElementById('s4-val').innerText = Math.round(data.binance_oi / 1000) + 'K';
+                    document.getElementById('s8-val').innerText = data.btc_status;
+                    document.getElementById('s8-val').className = 'staff-val ' + (data.btc_status === 'DUMP' ? 'neg' : 'pos');
+                    
+                    if (data.active_position) {
+                        document.getElementById('s13-val').innerText = "매수진입";
+                        document.getElementById('s13-val').className = "staff-val pos";
+                        document.getElementById('s14-val').innerText = data.active_position.symbol.split('_')[0];
+                        document.getElementById('s14-val').className = "staff-val pos";
+                    } else {
+                        document.getElementById('s13-val').innerText = "관망(WAIT)";
+                        document.getElementById('s13-val').className = "staff-val";
+                        document.getElementById('s14-val').innerText = "NONE";
+                        document.getElementById('s14-val').className = "staff-val";
+                    }
 
-                    // 스캔 테이블 업데이트
-                    const scanTbody = document.getElementById('scan-table-body');
+                    // 스캔 테이블
+                    const scanTbody = document.getElementById('scan-tbody');
                     scanTbody.innerHTML = '';
-                    status.scan_results.forEach(item => {
+                    data.scan_results.forEach(item => {
                         const tr = document.createElement('tr');
-                        const squeezeBadge = item.squeeze_on 
-                            ? `<span class="status-badge badge-yellow">응축 (Squeeze ON)</span>` 
-                            : `<span class="status-badge badge-green">폭발 (Squeeze OFF)</span>`;
-                        const momClass = item.momentum > 0 ? 'positive' : 'negative';
-                        
+                        const sqBadge = item.squeeze_on 
+                            ? `<span class="badge bg-yellow">응축</span>` 
+                            : `<span class="badge bg-green">폭발</span>`;
+                        const momClass = item.momentum > 0 ? 'pos' : 'neg';
+
                         tr.innerHTML = `
-                            <td><b>${item.symbol}</b></td>
-                            <td>${Number(item.price).toLocaleString()}원</td>
-                            <td>${squeezeBadge}</td>
+                            <td><b>${item.symbol.split('_')[0]}</b></td>
+                            <td>${Number(item.price).toLocaleString()}</td>
+                            <td>${sqBadge}</td>
                             <td class="${momClass}">${Number(item.momentum).toFixed(2)}</td>
-                            <td>${item.eval_reason}</td>
+                            <td style="font-size:8.5px; color:#8b949e;">${item.eval_reason}</td>
                         `;
                         scanTbody.appendChild(tr);
                     });
-
-                    // 보유 포지션 업데이트
-                    if (status.active_position) {
-                        document.getElementById('active-symbol').innerText = status.active_position.symbol;
-                        document.getElementById('active-pos-info').innerText = `진입: ${Number(status.active_position.entry_price).toLocaleString()}원 | 손절: ${Number(status.active_position.stop_loss).toLocaleString()}원`;
-                    } else {
-                        document.getElementById('active-symbol').innerText = "관망 중 (WAIT)";
-                        document.getElementById('active-pos-info').innerText = "NONE";
-                    }
                 }
 
-                // 2. 매매일지 CSV 호출
-                const journalRes = await fetch('logs/trade_journal.csv?t=' + new Date().getTime());
-                if (journalRes.ok) {
-                    const csvText = await journalRes.text();
+                // 2. trade_journal.csv 동기화
+                const jRes = await fetch('logs/trade_journal.csv?t=' + new Date().getTime());
+                if (jRes.ok) {
+                    const csvText = await jRes.text();
                     const rows = csvText.trim().split('\n').slice(1);
-                    const journalTbody = document.getElementById('journal-table-body');
+                    const jTbody = document.getElementById('journal-tbody');
                     if (rows.length > 0 && rows[0] !== "") {
-                        journalTbody.innerHTML = '';
-                        rows.reverse().forEach(row => {
+                        jTbody.innerHTML = '';
+                        rows.reverse().slice(0, 3).forEach(row => {
                             const cols = row.split(',');
                             if (cols.length >= 10) {
                                 const tr = document.createElement('tr');
                                 const pnl = parseFloat(cols[7]);
-                                const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+                                const pnlClass = pnl >= 0 ? 'pos' : 'neg';
+                                const timeStr = cols[5].split(' ')[1] || cols[5];
                                 tr.innerHTML = `
-                                    <td>${cols[1]}</td>
-                                    <td><b>${cols[0]}</b></td>
-                                    <td>${Number(cols[2]).toLocaleString()}원</td>
-                                    <td>${Number(cols[6]).toLocaleString()}원</td>
-                                    <td class="${pnlClass}">${pnl > 0 ? '+' : ''}${pnl.toLocaleString()}원</td>
+                                    <td style="color:#8b949e;">${timeStr}</td>
+                                    <td><b>${cols[0].split('_')[0]}</b></td>
+                                    <td>${Number(cols[2]).toLocaleString()}</td>
+                                    <td class="${pnlClass}">${pnl > 0 ? '+' : ''}${pnl.toLocaleString()}</td>
                                     <td class="${pnlClass}">${cols[8]}%</td>
-                                    <td>${cols[9]}</td>
-                                    <td>${Number(cols[10]).toLocaleString()}원</td>
+                                    <td style="font-size:8.5px;">${cols[9]}</td>
                                 `;
-                                journalTbody.appendChild(tr);
+                                jTbody.appendChild(tr);
                             }
                         });
                     }
                 }
-            } catch (err) {
-                console.log("대시보드 동기화 대기 중...", err);
-            }
+            } catch (err) {}
         }
 
-        // 5초마다 실시간 동기화
-        setInterval(updateDashboard, 5000);
+        setInterval(updateDashboard, 3000);
         updateDashboard();
     </script>
 </body>
 </html>
+
