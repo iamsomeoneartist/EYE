@@ -17,7 +17,7 @@ import urllib.parse
 
 import requests
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta  # 원조 pandas_ta는 유지보수 중단(구버전 삭제)됨 -> 커뮤니티 포크로 교체
 
 STATE_FILE = "state.json"
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
