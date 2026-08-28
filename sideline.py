@@ -408,6 +408,8 @@ def load_state():
 
 
 def save_state(state):
+    state["mode"] = "LIVE" if LIVE_TRADING else "PAPER"
+    state["last_run_at"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=4)
 
@@ -457,6 +459,12 @@ def manage_open_position(state, blacklist):
     # Breakeven Lock: 최고가가 진입가 대비 +5.0% 이상이면 손절선을 수수료 보정 구간(+2.5%)까지 상향
     if state["highest_price"] >= state["buy_price"] * 1.050:
         stop_loss_price = max(stop_loss_price, state["buy_price"] * 1.025)
+
+    # 대시보드 상세보기용: 지금 계산된 손절/추적손절선과 현재가를 저장
+    state["current_price"] = current_price
+    state["current_stop_loss"] = round(stop_loss_price, 2)
+    state["current_trailing_stop"] = round(trailing_price, 2)
+    state["current_rsi"] = round(float(analysis["rsi"]), 2)
 
     should_exit = (
         current_price <= stop_loss_price
@@ -518,6 +526,10 @@ def _clear_position(state):
     state["buy_price"] = 0
     state["units"] = 0
     state["highest_price"] = 0
+    state["current_price"] = 0
+    state["current_stop_loss"] = 0
+    state["current_trailing_stop"] = 0
+    state["current_rsi"] = 0
 
 
 # ------------------------------------------------------------------
@@ -553,7 +565,16 @@ def run():
         if res is None:
             continue
 
-        scan_summary.append({"symbol": symbol, "reason": res["eval_reason"], "price": res["price"]})
+        scan_summary.append({
+            "symbol": symbol,
+            "reason": res["eval_reason"],
+            "price": res["price"],
+            "rsi": round(float(res["rsi"]), 2),
+            "momentum": round(float(res["mom"]), 2),
+            "atr": round(float(res["atr"]), 2),
+            "stop_loss_estimate": round(float(res["stop_loss_estimate"]), 2),
+            "is_buyable": bool(res["is_buyable"]),
+        })
 
         if state["position"] == "NONE" and res["is_buyable"]:
             price = res["price"]

@@ -7,7 +7,7 @@
 <style>
   :root {
     --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --sub: #94a3b8;
-    --green: #10b981; --red: #ef4444; --blue: #3b82f6;
+    --green: #10b981; --red: #ef4444; --blue: #3b82f6; --yellow: #f59e0b;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, Roboto, sans-serif; background: var(--bg); color: var(--text);
@@ -15,11 +15,15 @@
   .header { display: flex; justify-content: space-between; align-items: center;
             padding-bottom: 8px; border-bottom: 1px solid #334155; }
   .header h1 { font-size: 1.1rem; color: var(--blue); }
-  .badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; }
-  .badge-live { background: rgba(239,68,68,0.2); color: var(--red); }
-  .badge-paper { background: rgba(16,185,129,0.2); color: var(--green); }
+  .badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
+  .badge-live { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid var(--red); }
+  .badge-paper { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid var(--green); }
+
   .card { background: var(--card); border-radius: 12px; padding: 16px;
-          display: flex; flex-direction: column; gap: 8px; }
+          display: flex; flex-direction: column; gap: 8px; position: relative; }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:active { background: #253449; }
+  .tap-hint { position: absolute; top: 12px; right: 14px; font-size: 0.65rem; color: var(--sub); }
   .card-title { font-size: 0.8rem; color: var(--sub); text-transform: uppercase; }
   .card-value { font-size: 1.4rem; font-weight: bold; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -38,26 +42,47 @@
   .role-task { font-size: 0.7rem; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .role-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .dot-done { background: var(--green); }
-  .dot-pending { background: #f59e0b; }
+  .dot-pending { background: var(--yellow); }
   .dot-blocked { background: var(--red); }
   .progress-bar-wrap { background: #334155; border-radius: 8px; height: 8px; overflow: hidden; }
   .progress-bar-fill { background: var(--blue); height: 100%; }
   .legend { display: flex; gap: 12px; font-size: 0.7rem; color: var(--sub); flex-wrap: wrap; }
   .legend span { display: flex; align-items: center; gap: 4px; }
-  .scan-row { background: var(--card); border-radius: 8px; padding: 8px 10px;
-              display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.75rem; }
-  .scan-symbol { font-weight: bold; }
+
+  .scan-row { background: var(--card); border-radius: 8px; padding: 10px 12px;
+              display: flex; justify-content: space-between; align-items: center; gap: 8px;
+              font-size: 0.75rem; cursor: pointer; }
+  .scan-row:active { background: #253449; }
+  .scan-symbol { font-weight: bold; display: flex; align-items: center; gap: 6px; }
+  .buy-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
   .scan-reason { color: var(--sub); text-align: right; }
+
+  /* 모달 */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+                    z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+  .modal-card { background: var(--card); border: 1px solid #334155; border-radius: 12px;
+                width: 100%; max-width: 360px; max-height: 80vh; overflow-y: auto; padding: 16px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center;
+                  border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 10px; }
+  .modal-title { font-size: 1rem; font-weight: bold; color: var(--blue); }
+  .modal-close { font-size: 1.2rem; color: var(--sub); }
+  .modal-row { display: flex; justify-content: space-between; padding: 6px 0;
+               border-bottom: 1px solid #223; font-size: 0.85rem; }
+  .modal-row span:first-child { color: var(--sub); }
+  .modal-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 8px; }
+  .modal-table th, .modal-table td { padding: 4px 3px; text-align: center; border-bottom: 1px solid #223; }
+  .modal-table th { color: var(--sub); font-weight: normal; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>📱 Eye Pipeline</h1>
-  <span id="modeBadge" class="badge badge-paper">PAPER</span>
+  <span id="modeBadge" class="badge badge-paper">-</span>
 </div>
 
-<div class="card">
+<div class="card clickable" id="positionCard" onclick="openPositionModal()">
+  <span class="tap-hint">👆 탭하여 상세</span>
   <div class="card-title">Position</div>
   <div class="card-value status-none" id="targetSymbol">-</div>
 </div>
@@ -73,7 +98,8 @@
   </div>
 </div>
 
-<div class="card">
+<div class="card clickable" id="balanceCard" onclick="openBalanceModal()">
+  <span class="tap-hint">👆 매매일지</span>
   <div class="card-title">Balance (실제 계산값)</div>
   <div class="card-value" id="balanceVal" style="color:var(--green)">0 KRW</div>
 </div>
@@ -117,8 +143,19 @@
   GitHub Pro/Team의 Private Pages를 쓰거나, 이 대시보드를 별도의 인증된 서버로 옮기세요.
 </div>
 
+<!-- 상세보기 모달 -->
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div id="modal-title" class="modal-title">상세</div>
+      <div class="modal-close" onclick="closeModalDirect()">✕</div>
+    </div>
+    <div id="modal-body">로딩 중...</div>
+  </div>
+</div>
+
 <script>
-// 실제 구현 상태만 반영 (가짜 매매 성과 수치 아님)
+// 실제 구현 상태만 반영 (가짜 매매성과 수치 아님)
 const TEAM_ROLES = [
   { name: "CEO · 수석 트레이더", task: "전략 설계(스퀴즈+RSI+ADX)", status: "done" },
   { name: "CPO · 컴플라이언스", task: "규정/약관 검토", status: "pending" },
@@ -138,6 +175,8 @@ const TEAM_ROLES = [
   { name: "백테스트 데이터 담당 (신규)", task: "실제 30일 성과 검증", status: "blocked" },
 ];
 
+let LATEST_STATE = null;
+
 function renderRoles() {
   const list = document.getElementById('roleList');
   const dotClass = { done: "dot-done", pending: "dot-pending", blocked: "dot-blocked" };
@@ -150,21 +189,114 @@ function renderRoles() {
       <div class="role-dot ${dotClass[r.status]}"></div>
     </div>
   `).join('');
-
   const doneCount = TEAM_ROLES.filter(r => r.status === "done").length;
   document.getElementById('progressLabel').innerText = `${doneCount}/${TEAM_ROLES.length} 완료`;
   document.getElementById('progressFill').style.width = `${(doneCount / TEAM_ROLES.length) * 100}%`;
 }
 renderRoles();
 
+// ---- 모달 공통 ----
+function showModal(title, bodyHtml) {
+  document.getElementById('modal-title').innerText = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+function closeModal(e) { if (e.target.id === 'modal-overlay') closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+// ---- 포지션 상세 모달 ----
+function openPositionModal() {
+  const d = LATEST_STATE;
+  if (!d) return;
+  if (d.position !== "BUY") {
+    showModal("포지션 상세", `<div class="modal-row"><span>상태</span><span>보유 포지션 없음 (스캔 중)</span></div>`);
+    return;
+  }
+  const rows = [
+    ["종목", d.target_symbol],
+    ["진입 시각", d.entry_time || "-"],
+    ["진입가", `${Number(d.buy_price||0).toLocaleString()} ₩`],
+    ["현재가", `${Number(d.current_price||0).toLocaleString()} ₩`],
+    ["최고가", `${Number(d.highest_price||0).toLocaleString()} ₩`],
+    ["보유수량", d.units],
+    ["현재 RSI", d.current_rsi],
+    ["손절선(ATR 기반)", `${Number(d.current_stop_loss||0).toLocaleString()} ₩`],
+    ["추적손절선", `${Number(d.current_trailing_stop||0).toLocaleString()} ₩`],
+  ];
+  showModal(`📈 ${d.target_symbol} 상세`,
+    rows.map(([k,v]) => `<div class="modal-row"><span>${k}</span><span>${v}</span></div>`).join(''));
+}
+
+// ---- 잔고/매매일지 모달 ----
+async function openBalanceModal() {
+  showModal("💰 매매일지", "불러오는 중...");
+  try {
+    const res = await fetch('../logs/trade_journal.csv?t=' + Date.now());
+    if (!res.ok) throw new Error('no file');
+    const text = await res.text();
+    const rows = text.trim().split('\n');
+    if (rows.length <= 1) {
+      showModal("💰 매매일지", `<div class="modal-row"><span>기록</span><span>아직 청산된 거래 없음</span></div>`);
+      return;
+    }
+    const header = rows[0].split(',');
+    const idx = (name) => header.indexOf(name);
+    const dataRows = rows.slice(1).reverse().slice(0, 10);
+    const html = `
+      <table class="modal-table">
+        <thead><tr><th>종목</th><th>청산시각</th><th>손익(원)</th><th>손익%</th><th>사유</th></tr></thead>
+        <tbody>
+          ${dataRows.map(r => {
+            const c = r.split(',');
+            const pnl = parseFloat(c[idx('pnl_krw')]);
+            const color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            return `<tr>
+              <td>${(c[idx('symbol')]||'').replace('_KRW','')}</td>
+              <td>${(c[idx('exit_time')]||'').split(' ')[1]||''}</td>
+              <td style="color:${color}">${pnl>0?'+':''}${pnl.toLocaleString()}</td>
+              <td style="color:${color}">${c[idx('pnl_pct')]}%</td>
+              <td>${c[idx('reason')]}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+    showModal("💰 매매일지 (최근 10건)", html);
+  } catch (err) {
+    showModal("💰 매매일지", `<div class="modal-row"><span>상태</span><span>아직 기록 없음 (첫 거래 전)</span></div>`);
+  }
+}
+
+// ---- 스캔 종목 상세 모달 ----
+function openScanModal(symbol) {
+  const scans = (LATEST_STATE && LATEST_STATE.last_scan) || [];
+  const s = scans.find(x => x.symbol === symbol);
+  if (!s) return;
+  const rows = [
+    ["현재가", `${Number(s.price).toLocaleString()} ₩`],
+    ["RSI", s.rsi],
+    ["모멘텀", s.momentum],
+    ["ATR", s.atr],
+    ["손절 추정가", `${Number(s.stop_loss_estimate).toLocaleString()} ₩`],
+    ["매수가능 여부", s.is_buyable ? "🟢 조건 충족" : "🟡 대기"],
+    ["판단 근거", s.reason],
+  ];
+  showModal(`🔍 ${symbol.replace('_KRW','')} 스캔 상세`,
+    rows.map(([k,v]) => `<div class="modal-row"><span>${k}</span><span>${v}</span></div>`).join(''));
+}
+
+// ---- 메인 갱신 ----
 async function updateDashboard() {
   try {
     const res = await fetch('../state.json?t=' + Date.now());
     const data = await res.json();
+    LATEST_STATE = data;
+
+    const modeBadge = document.getElementById('modeBadge');
+    const isLive = data.mode === "LIVE";
+    modeBadge.innerText = isLive ? "🔴 LIVE 실거래" : "🟢 PAPER 모의";
+    modeBadge.className = "badge " + (isLive ? "badge-live" : "badge-paper");
 
     const symbolElem = document.getElementById('targetSymbol');
-    const modeBadge = document.getElementById('modeBadge');
-
     if (data.position === "BUY") {
       symbolElem.innerText = `BUY : ${data.target_symbol}`;
       symbolElem.className = "card-value status-buy";
@@ -182,17 +314,17 @@ async function updateDashboard() {
     const scanList = document.getElementById('scanList');
     const scans = data.last_scan || [];
     if (scans.length === 0) {
-      scanList.innerHTML = `<div class="scan-row"><span class="scan-reason">스캔 데이터 없음</span></div>`;
+      scanList.innerHTML = `<div class="scan-row"><span class="scan-reason">스캔 데이터 없음 (다음 5분 주기 대기)</span></div>`;
     } else {
       scanList.innerHTML = scans.map(s => `
-        <div class="scan-row">
-          <span class="scan-symbol">${s.symbol.replace('_KRW','')}</span>
-          <span class="scan-reason">${s.reason}</span>
+        <div class="scan-row" onclick="openScanModal('${s.symbol}')">
+          <span class="scan-symbol">${s.is_buyable ? '<span class=\"buy-dot\"></span>' : ''}${s.symbol.replace('_KRW','')}</span>
+          <span class="scan-reason">${s.reason} ›</span>
         </div>
       `).join('');
     }
 
-    document.getElementById('lastUpdated').innerText = new Date().toLocaleString('ko-KR');
+    document.getElementById('lastUpdated').innerText = data.last_run_at || new Date().toLocaleString('ko-KR');
   } catch (err) {
     document.getElementById('lastUpdated').innerText = "state.json 로드 실패";
   }
