@@ -39,6 +39,9 @@ jobs:
           INITIAL_SEED: ${{ vars.INITIAL_SEED || '100000' }}
           MAX_RISK_PER_TRADE: ${{ vars.MAX_RISK_PER_TRADE || '0.015' }}
           MAX_POSITION_PCT: ${{ vars.MAX_POSITION_PCT || '0.5' }}
+          MAX_SPREAD_PCT: ${{ vars.MAX_SPREAD_PCT || '0.5' }}
+          MAX_KIMCHI_PREMIUM_PCT: ${{ vars.MAX_KIMCHI_PREMIUM_PCT || '5.0' }}
+          MIN_KIMCHI_PREMIUM_PCT: ${{ vars.MIN_KIMCHI_PREMIUM_PCT || '-3.0' }}
         run: python sideline.py
 
       - name: Commit and Push State
