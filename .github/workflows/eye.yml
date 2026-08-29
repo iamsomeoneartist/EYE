@@ -45,10 +45,19 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p logs
-          git add state.json
+          mkdir -p logs docs/logs
+
+          # 버그 수정: GitHub Pages는 docs 폴더를 웹 루트로 서빙하므로
+          # 대시보드(docs/index.html)가 부모 경로(../state.json)에 접근할 수 없다.
+          # state.json / trade_journal.csv를 docs 안에도 함께 넣어준다.
+          cp state.json docs/state.json
           if [ -f logs/trade_journal.csv ]; then
-            git add logs/trade_journal.csv
+            cp logs/trade_journal.csv docs/logs/trade_journal.csv
+          fi
+
+          git add state.json docs/state.json
+          if [ -f logs/trade_journal.csv ]; then
+            git add logs/trade_journal.csv docs/logs/trade_journal.csv
           fi
           git diff-index --quiet HEAD || git commit -m "Auto: update state via Eye Pipeline [skip ci]"
           git pull --rebase
