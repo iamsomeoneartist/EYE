@@ -7,9 +7,9 @@
     "daily_loss_count": 0,
     "daily_trade_count": 0,
     "consecutive_losses": 0,
-    "last_reset_date": "2026-08-28",
+    "last_reset_date": "2026-08-29",
     "balance": 100000.0,
     "last_scan": [],
     "mode": "PAPER",
-    "last_run_at": "2026-08-28 23:55:51"
+    "last_run_at": "2026-08-29 00:04:02"
 }
