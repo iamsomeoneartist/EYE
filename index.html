@@ -9,67 +9,71 @@
     --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --sub: #94a3b8;
     --green: #10b981; --red: #ef4444; --blue: #3b82f6; --yellow: #f59e0b;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
   body { font-family: -apple-system, Roboto, sans-serif; background: var(--bg); color: var(--text);
-         padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+         padding: 10px; display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
+
   .header { display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 8px; border-bottom: 1px solid #334155; }
-  .header h1 { font-size: 1.1rem; color: var(--blue); }
-  .badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
+            padding-bottom: 6px; border-bottom: 1px solid #334155; }
+  .header h1 { font-size: 0.95rem; color: var(--blue); }
+  .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
   .badge-live { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid var(--red); }
   .badge-paper { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid var(--green); }
 
-  .card { background: var(--card); border-radius: 12px; padding: 16px;
-          display: flex; flex-direction: column; gap: 8px; position: relative; }
+  .card { background: var(--card); border-radius: 10px; padding: 9px 11px;
+          display: flex; flex-direction: column; gap: 2px; position: relative; }
   .card.clickable { cursor: pointer; }
   .card.clickable:active { background: #253449; }
-  .tap-hint { position: absolute; top: 12px; right: 14px; font-size: 0.65rem; color: var(--sub); }
-  .card-title { font-size: 0.8rem; color: var(--sub); text-transform: uppercase; }
-  .card-value { font-size: 1.4rem; font-weight: bold; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tap-hint { position: absolute; top: 8px; right: 10px; font-size: 0.6rem; color: var(--sub); }
+  .card-title { font-size: 0.62rem; color: var(--sub); text-transform: uppercase; letter-spacing: 0.03em; }
+  .card-value { font-size: 1.05rem; font-weight: bold; }
+  .card-value.small { font-size: 0.9rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
   .status-buy { color: var(--green); }
   .status-none { color: var(--sub); }
-  .note { font-size: 0.75rem; color: var(--sub); line-height: 1.4; }
 
-  .section-title { font-size: 0.95rem; font-weight: bold; color: var(--text);
-                    margin-top: 4px; display: flex; justify-content: space-between; align-items: center; }
-  .section-sub { font-size: 0.75rem; color: var(--sub); font-weight: normal; }
-  .role-list { display: flex; flex-direction: column; gap: 6px; }
-  .role-row { background: var(--card); border-radius: 10px; padding: 10px 12px;
+  .scan-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .scan-chip { background: var(--card); border-radius: 8px; padding: 6px 9px; flex-shrink: 0;
+               min-width: 78px; text-align: center; font-size: 0.68rem; }
+  .scan-chip .sym { font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .buy-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .scan-chip .rsn { color: var(--sub); font-size: 0.6rem; margin-top: 2px;
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78px; }
+
+  .footer-row { display: flex; justify-content: space-between; align-items: center;
+                font-size: 0.62rem; color: var(--sub); }
+  .toggle-btn { background: var(--card); border: none; color: var(--sub); font-size: 0.65rem;
+                padding: 6px 10px; border-radius: 8px; width: 100%; text-align: center; }
+
+  /* 접이식 팀 현황 (기본 숨김, 스크롤 유발 방지) */
+  #teamPanel { display: none; overflow-y: auto; max-height: 40vh; }
+  .role-list { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+  .role-row { background: var(--card); border-radius: 8px; padding: 7px 10px;
               display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .role-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .role-name { font-size: 0.85rem; font-weight: 600; }
-  .role-task { font-size: 0.7rem; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .role-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .role-name { font-size: 0.72rem; font-weight: 600; }
+  .role-task { font-size: 0.6rem; color: var(--sub); }
+  .role-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .dot-done { background: var(--green); }
   .dot-pending { background: var(--yellow); }
   .dot-blocked { background: var(--red); }
-  .progress-bar-wrap { background: #334155; border-radius: 8px; height: 8px; overflow: hidden; }
+  .progress-bar-wrap { background: #334155; border-radius: 8px; height: 6px; overflow: hidden; margin-top: 6px; }
   .progress-bar-fill { background: var(--blue); height: 100%; }
-  .legend { display: flex; gap: 12px; font-size: 0.7rem; color: var(--sub); flex-wrap: wrap; }
-  .legend span { display: flex; align-items: center; gap: 4px; }
-
-  .scan-row { background: var(--card); border-radius: 8px; padding: 10px 12px;
-              display: flex; justify-content: space-between; align-items: center; gap: 8px;
-              font-size: 0.75rem; cursor: pointer; }
-  .scan-row:active { background: #253449; }
-  .scan-symbol { font-weight: bold; display: flex; align-items: center; gap: 6px; }
-  .buy-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
-  .scan-reason { color: var(--sub); text-align: right; }
 
   /* 모달 */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
                     z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
   .modal-card { background: var(--card); border: 1px solid #334155; border-radius: 12px;
-                width: 100%; max-width: 360px; max-height: 80vh; overflow-y: auto; padding: 16px; }
+                width: 100%; max-width: 340px; max-height: 78vh; overflow-y: auto; padding: 14px; }
   .modal-header { display: flex; justify-content: space-between; align-items: center;
-                  border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 10px; }
-  .modal-title { font-size: 1rem; font-weight: bold; color: var(--blue); }
-  .modal-close { font-size: 1.2rem; color: var(--sub); }
-  .modal-row { display: flex; justify-content: space-between; padding: 6px 0;
-               border-bottom: 1px solid #223; font-size: 0.85rem; }
+                  border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 8px; }
+  .modal-title { font-size: 0.95rem; font-weight: bold; color: var(--blue); }
+  .modal-close { font-size: 1.1rem; color: var(--sub); }
+  .modal-row { display: flex; justify-content: space-between; padding: 5px 0;
+               border-bottom: 1px solid #223; font-size: 0.8rem; }
   .modal-row span:first-child { color: var(--sub); }
-  .modal-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 8px; }
+  .modal-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; margin-top: 6px; }
   .modal-table th, .modal-table td { padding: 4px 3px; text-align: center; border-bottom: 1px solid #223; }
   .modal-table th { color: var(--sub); font-weight: normal; }
 </style>
@@ -82,65 +86,49 @@
 </div>
 
 <div class="card clickable" id="positionCard" onclick="openPositionModal()">
-  <span class="tap-hint">👆 탭하여 상세</span>
+  <span class="tap-hint">👆 상세</span>
   <div class="card-title">Position</div>
   <div class="card-value status-none" id="targetSymbol">-</div>
 </div>
 
 <div class="grid-2">
   <div class="card">
-    <div class="card-title">Entry Price</div>
-    <div class="card-value" style="font-size:1.1rem" id="buyPrice">0 KRW</div>
+    <div class="card-title">Entry</div>
+    <div class="card-value small" id="buyPrice">0 KRW</div>
   </div>
   <div class="card">
-    <div class="card-title">Highest Price</div>
-    <div class="card-value" style="font-size:1.1rem;color:var(--green)" id="highPrice">0 KRW</div>
+    <div class="card-title">Highest</div>
+    <div class="card-value small" style="color:var(--green)" id="highPrice">0 KRW</div>
   </div>
 </div>
 
-<div class="card clickable" id="balanceCard" onclick="openBalanceModal()">
-  <span class="tap-hint">👆 매매일지</span>
-  <div class="card-title">Balance (실제 계산값)</div>
-  <div class="card-value" id="balanceVal" style="color:var(--green)">0 KRW</div>
-</div>
-
-<div class="grid-2">
-  <div class="card">
-    <div class="card-title">Daily Trades</div>
-    <div class="card-value" style="font-size:1.1rem" id="tradeCount">0/2</div>
+<div class="grid-3">
+  <div class="card clickable" onclick="openBalanceModal()">
+    <div class="card-title">Balance</div>
+    <div class="card-value small" style="color:var(--green)" id="balanceVal">0</div>
   </div>
   <div class="card">
-    <div class="card-title">Daily Losses</div>
-    <div class="card-value" style="font-size:1.1rem" id="lossCount">0/2</div>
+    <div class="card-title">Trades</div>
+    <div class="card-value small" id="tradeCount">0/2</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Losses</div>
+    <div class="card-value small" id="lossCount">0/2</div>
   </div>
 </div>
 
-<div class="section-title">🔍 최근 스캔 근거<span class="section-sub" id="scanTime">-</span></div>
-<div class="role-list" id="scanList"></div>
+<div class="card-title" style="padding-left:2px">🔍 최근 스캔 (탭하여 상세)</div>
+<div class="scan-scroll" id="scanList"></div>
 
-<div class="card">
-  <div class="card-title">Last Updated</div>
-  <div style="font-size:0.85rem;color:var(--sub)" id="lastUpdated">-</div>
+<div class="footer-row">
+  <span id="lastUpdated">-</span>
+  <span id="modeInfo"></span>
 </div>
 
-<div class="section-title">
-  🧩 Team Role Status
-  <span class="section-sub" id="progressLabel">0/16 완료</span>
-</div>
-<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
-
-<div class="legend">
-  <span><span class="role-dot dot-done"></span>완료</span>
-  <span><span class="role-dot dot-pending"></span>대기</span>
-  <span><span class="role-dot dot-blocked"></span>차단됨(입력 필요)</span>
-</div>
-
-<div class="role-list" id="roleList"></div>
-
-<div class="note">
-  ⚠️ 이 페이지는 GitHub Pages(공개) 저장소에서 호스팅됩니다. state.json이 공개되면
-  보유 종목·진입가·매매 이력이 누구에게나 노출됩니다. 비공개로 운영하려면
-  GitHub Pro/Team의 Private Pages를 쓰거나, 이 대시보드를 별도의 인증된 서버로 옮기세요.
+<button class="toggle-btn" onclick="toggleTeamPanel()">🧩 Team Role Status <span id="progressLabel">(0/16)</span> ▾</button>
+<div id="teamPanel">
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="role-list" id="roleList"></div>
 </div>
 
 <!-- 상세보기 모달 -->
@@ -155,7 +143,6 @@
 </div>
 
 <script>
-// 실제 구현 상태만 반영 (가짜 매매성과 수치 아님)
 const TEAM_ROLES = [
   { name: "CEO · 수석 트레이더", task: "전략 설계(스퀴즈+RSI+ADX)", status: "done" },
   { name: "CPO · 컴플라이언스", task: "규정/약관 검토", status: "pending" },
@@ -182,7 +169,7 @@ function renderRoles() {
   const dotClass = { done: "dot-done", pending: "dot-pending", blocked: "dot-blocked" };
   list.innerHTML = TEAM_ROLES.map(r => `
     <div class="role-row">
-      <div class="role-info">
+      <div>
         <div class="role-name">${r.name}</div>
         <div class="role-task">${r.task}</div>
       </div>
@@ -190,12 +177,16 @@ function renderRoles() {
     </div>
   `).join('');
   const doneCount = TEAM_ROLES.filter(r => r.status === "done").length;
-  document.getElementById('progressLabel').innerText = `${doneCount}/${TEAM_ROLES.length} 완료`;
+  document.getElementById('progressLabel').innerText = `(${doneCount}/${TEAM_ROLES.length})`;
   document.getElementById('progressFill').style.width = `${(doneCount / TEAM_ROLES.length) * 100}%`;
 }
 renderRoles();
 
-// ---- 모달 공통 ----
+function toggleTeamPanel() {
+  const el = document.getElementById('teamPanel');
+  el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+}
+
 function showModal(title, bodyHtml) {
   document.getElementById('modal-title').innerText = title;
   document.getElementById('modal-body').innerHTML = bodyHtml;
@@ -204,7 +195,6 @@ function showModal(title, bodyHtml) {
 function closeModal(e) { if (e.target.id === 'modal-overlay') closeModalDirect(); }
 function closeModalDirect() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-// ---- 포지션 상세 모달 ----
 function openPositionModal() {
   const d = LATEST_STATE;
   if (!d) return;
@@ -227,11 +217,10 @@ function openPositionModal() {
     rows.map(([k,v]) => `<div class="modal-row"><span>${k}</span><span>${v}</span></div>`).join(''));
 }
 
-// ---- 잔고/매매일지 모달 ----
 async function openBalanceModal() {
   showModal("💰 매매일지", "불러오는 중...");
   try {
-    const res = await fetch('../logs/trade_journal.csv?t=' + Date.now());
+    const res = await fetch('./logs/trade_journal.csv?t=' + Date.now());
     if (!res.ok) throw new Error('no file');
     const text = await res.text();
     const rows = text.trim().split('\n');
@@ -266,7 +255,6 @@ async function openBalanceModal() {
   }
 }
 
-// ---- 스캔 종목 상세 모달 ----
 function openScanModal(symbol) {
   const scans = (LATEST_STATE && LATEST_STATE.last_scan) || [];
   const s = scans.find(x => x.symbol === symbol);
@@ -284,16 +272,17 @@ function openScanModal(symbol) {
     rows.map(([k,v]) => `<div class="modal-row"><span>${k}</span><span>${v}</span></div>`).join(''));
 }
 
-// ---- 메인 갱신 ----
 async function updateDashboard() {
   try {
-    const res = await fetch('../state.json?t=' + Date.now());
+    // 버그 수정: GitHub Pages는 docs 폴더를 웹 루트로 서빙하므로 같은 위치(./)에서 읽는다
+    const res = await fetch('./state.json?t=' + Date.now());
+    if (!res.ok) throw new Error('state.json not found (' + res.status + ')');
     const data = await res.json();
     LATEST_STATE = data;
 
     const modeBadge = document.getElementById('modeBadge');
     const isLive = data.mode === "LIVE";
-    modeBadge.innerText = isLive ? "🔴 LIVE 실거래" : "🟢 PAPER 모의";
+    modeBadge.innerText = isLive ? "🔴 LIVE" : "🟢 PAPER";
     modeBadge.className = "badge " + (isLive ? "badge-live" : "badge-paper");
 
     const symbolElem = document.getElementById('targetSymbol');
@@ -305,28 +294,28 @@ async function updateDashboard() {
       symbolElem.className = "card-value status-none";
     }
 
-    document.getElementById('buyPrice').innerText = `${(data.buy_price || 0).toLocaleString()} ₩`;
-    document.getElementById('highPrice').innerText = `${(data.highest_price || 0).toLocaleString()} ₩`;
+    document.getElementById('buyPrice').innerText = `${(data.buy_price || 0).toLocaleString()}`;
+    document.getElementById('highPrice').innerText = `${(data.highest_price || 0).toLocaleString()}`;
     document.getElementById('tradeCount').innerText = `${data.daily_trade_count || 0}/2`;
     document.getElementById('lossCount').innerText = `${data.daily_loss_count || 0}/2`;
-    document.getElementById('balanceVal').innerText = `${Math.round(data.balance || 0).toLocaleString()} ₩`;
+    document.getElementById('balanceVal').innerText = `${Math.round(data.balance || 0).toLocaleString()}`;
 
     const scanList = document.getElementById('scanList');
     const scans = data.last_scan || [];
     if (scans.length === 0) {
-      scanList.innerHTML = `<div class="scan-row"><span class="scan-reason">스캔 데이터 없음 (다음 5분 주기 대기)</span></div>`;
+      scanList.innerHTML = `<div class="scan-chip">대기중</div>`;
     } else {
       scanList.innerHTML = scans.map(s => `
-        <div class="scan-row" onclick="openScanModal('${s.symbol}')">
-          <span class="scan-symbol">${s.is_buyable ? '<span class=\"buy-dot\"></span>' : ''}${s.symbol.replace('_KRW','')}</span>
-          <span class="scan-reason">${s.reason} ›</span>
+        <div class="scan-chip" onclick="openScanModal('${s.symbol}')">
+          <div class="sym">${s.is_buyable ? '<span class="buy-dot"></span>' : ''}${s.symbol.replace('_KRW','')}</div>
+          <div class="rsn">${s.reason}</div>
         </div>
       `).join('');
     }
 
-    document.getElementById('lastUpdated').innerText = data.last_run_at || new Date().toLocaleString('ko-KR');
+    document.getElementById('lastUpdated').innerText = "업데이트: " + (data.last_run_at || "-");
   } catch (err) {
-    document.getElementById('lastUpdated').innerText = "state.json 로드 실패";
+    document.getElementById('lastUpdated').innerText = "state.json 로드 실패: " + err.message;
   }
 }
 updateDashboard();
