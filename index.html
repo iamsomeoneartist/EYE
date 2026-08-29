@@ -17,9 +17,21 @@
   .header { display: flex; justify-content: space-between; align-items: center;
             padding-bottom: 6px; border-bottom: 1px solid #334155; }
   .header h1 { font-size: 0.95rem; color: var(--blue); }
-  .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
+  .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
   .badge-live { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid var(--red); }
   .badge-paper { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid var(--green); }
+
+  /* 지금 무엇을 하는지 - 실시간(최근 실행 기준) 배너 */
+  .activity-banner { background: linear-gradient(135deg, #1e3a5f, #1e293b); border: 1px solid #2563eb;
+                      border-radius: 10px; padding: 9px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .activity-main { font-size: 0.82rem; font-weight: bold; }
+  .activity-sub { font-size: 0.62rem; color: var(--sub); }
+
+  .stage-row { display: flex; gap: 5px; }
+  .stage-chip { flex: 1; background: var(--card); border-radius: 7px; padding: 5px 3px; text-align: center;
+                font-size: 0.58rem; color: var(--sub); border: 1px solid transparent; }
+  .stage-chip.active { border-color: var(--blue); color: var(--text); background: rgba(59,130,246,0.15); }
+  .stage-icon { font-size: 0.9rem; display: block; }
 
   .card { background: var(--card); border-radius: 10px; padding: 9px 11px;
           display: flex; flex-direction: column; gap: 2px; position: relative; }
@@ -82,8 +94,15 @@
 
 <div class="header">
   <h1>📱 Eye Pipeline</h1>
-  <span id="modeBadge" class="badge badge-paper">-</span>
+  <span id="modeBadge" class="badge badge-paper" onclick="openModeModal()">-</span>
 </div>
+
+<div class="activity-banner" id="activityBanner" onclick="openActivityModal()">
+  <div class="activity-main" id="activityMain">불러오는 중...</div>
+  <div class="activity-sub" id="activitySub">-</div>
+</div>
+
+<div class="stage-row" id="stageRow"></div>
 
 <div class="card clickable" id="positionCard" onclick="openPositionModal()">
   <span class="tap-hint">👆 상세</span>
@@ -125,8 +144,12 @@
   <span id="modeInfo"></span>
 </div>
 
-<button class="toggle-btn" onclick="toggleTeamPanel()">🧩 Team Role Status <span id="progressLabel">(0/16)</span> ▾</button>
+<button class="toggle-btn" onclick="toggleTeamPanel()">🧩 개발 진행률(팀 역할표) <span id="progressLabel">(0/16)</span> ▾</button>
 <div id="teamPanel">
+  <div style="font-size:0.6rem;color:var(--sub);margin-top:4px">
+    ※ 이 목록은 "봇을 얼마나 완성했는지"이지, 지금 봇이 하고 있는 실시간 작업이 아닙니다.
+    실시간 작업 상태는 위쪽 "지금 무엇을 하는지" 배너를 보세요.
+  </div>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
   <div class="role-list" id="roleList"></div>
 </div>
@@ -161,6 +184,69 @@ const TEAM_ROLES = [
   { name: "AI 비서", task: "디스코드 실시간 보고", status: "done" },
   { name: "백테스트 데이터 담당 (신규)", task: "실제 30일 성과 검증", status: "blocked" },
 ];
+
+// ---- 모드(PAPER/LIVE) 설명 모달: 토글 아님, 상태 표시 전용임을 명확히 안내 ----
+function openModeModal() {
+  const isLive = LATEST_STATE && LATEST_STATE.mode === "LIVE";
+  showModal("⚙️ 매매 모드 안내", `
+    <div class="modal-row"><span>현재 모드</span><span>${isLive ? "🔴 LIVE (실거래)" : "🟢 PAPER (모의)"}</span></div>
+    <div style="font-size:0.75rem;color:var(--sub);line-height:1.5;margin-top:8px">
+      이 배지는 <b>탭해서 바꾸는 스위치가 아닙니다.</b> 이 페이지는 정적으로 호스팅되는
+      GitHub Pages라 서버가 없어서, 여기서 눌러도 실제로 값을 바꿀 방법이 없습니다.<br><br>
+      실제로 전환하려면:<br>
+      1. GitHub 저장소 → Settings → Secrets and variables → Actions → Variables 탭<br>
+      2. <b>LIVE_TRADING</b> 값을 true/false로 직접 수정<br>
+      3. 다음 5분 주기 실행부터 반영됩니다.
+    </div>
+  `);
+}
+
+// ---- 파이프라인 단계(실제로는 5분 주기 배치 실행 결과 기준, "진짜 실시간 스트리밍"은 아님) ----
+const STAGES = [
+  { key: "scan", icon: "🔍", label: "스캔" },
+  { key: "risk", icon: "⚖️", label: "리스크판단" },
+  { key: "order", icon: "⚡", label: "체결" },
+  { key: "monitor", icon: "📈", label: "감시" },
+];
+
+function computeActivity(d) {
+  const lockout = (d.daily_loss_count || 0) >= 2 || (d.daily_trade_count || 0) >= 2;
+  if (d.position === "BUY") {
+    return {
+      stage: "monitor",
+      main: `📈 포지션 감시 중: ${d.target_symbol}`,
+      sub: `손절선 ${Number(d.current_stop_loss||0).toLocaleString()} ₩ / 추적손절 ${Number(d.current_trailing_stop||0).toLocaleString()} ₩ 기준으로 매 5분마다 확인`,
+    };
+  }
+  if (lockout) {
+    return {
+      stage: "risk",
+      main: "⏸ 오늘 매매 한도 도달 - 신규 진입 대기",
+      sub: `매매 ${d.daily_trade_count||0}/2, 손절 ${d.daily_loss_count||0}/2 → 자정 이후 초기화`,
+    };
+  }
+  return {
+    stage: "scan",
+    main: "🔍 스캔 중 (거래대금 상위 종목 조건 확인)",
+    sub: "스퀴즈/RSI/ADX/거래량 조건 매 5분마다 재검사",
+  };
+}
+
+function openActivityModal() {
+  const d = LATEST_STATE;
+  if (!d) return;
+  const a = computeActivity(d);
+  showModal("🔄 실시간(최근 실행 기준) 상태", `
+    <div class="modal-row"><span>현재 단계</span><span>${a.main}</span></div>
+    <div class="modal-row"><span>세부</span><span>${a.sub}</span></div>
+    <div class="modal-row"><span>마지막 실행</span><span>${d.last_run_at || '-'}</span></div>
+    <div style="font-size:0.7rem;color:var(--sub);margin-top:8px">
+      ※ 이 봇은 상시 구동 서버가 아니라 GitHub Actions에서 5분마다 한 번씩 실행되는
+      배치 스크립트입니다. 따라서 "지금 이 순간"이 아니라 "가장 최근 5분 주기 실행 결과"
+      기준의 상태입니다.
+    </div>
+  `);
+}
 
 let LATEST_STATE = null;
 
@@ -279,6 +365,15 @@ async function updateDashboard() {
     if (!res.ok) throw new Error('state.json not found (' + res.status + ')');
     const data = await res.json();
     LATEST_STATE = data;
+
+    const a = computeActivity(data);
+    document.getElementById('activityMain').innerText = a.main;
+    document.getElementById('activitySub').innerText = a.sub;
+    document.getElementById('stageRow').innerHTML = STAGES.map(s => `
+      <div class="stage-chip ${s.key === a.stage ? 'active' : ''}">
+        <span class="stage-icon">${s.icon}</span>${s.label}
+      </div>
+    `).join('');
 
     const modeBadge = document.getElementById('modeBadge');
     const isLive = data.mode === "LIVE";
