@@ -26,7 +26,7 @@ BITHUMB_ACCESS_KEY = os.getenv("BITHUMB_ACCESS_KEY", "")
 BITHUMB_SECRET_KEY = os.getenv("BITHUMB_SECRET_KEY", "")
 LIVE_TRADING = os.getenv("LIVE_TRADING", "false").lower() == "true"
 
-TOP_VOL_COUNT = 15
+TOP_VOL_COUNT = 20  # 거래대금+거래량 복합 상위 종목 수
 MAX_DAILY_TRADES = 2
 MAX_DAILY_LOSSES = 2
 MIN_ORDER_VALUE = 5000  # 빗썸 최소 주문금액(원)
@@ -203,6 +203,70 @@ def get_bithumb_ohlcv(symbol, interval="5m", retries=3):
     return None
 
 
+# ------------------------------------------------------------------
+# 전문 트레이더 스킬 1: 호가창 스프레드 체크 (유동성 확인 후 진입)
+# ------------------------------------------------------------------
+MAX_SPREAD_PCT = float(os.getenv("MAX_SPREAD_PCT", "0.5"))  # 매수/매도 1호가 스프레드 최대 허용치(%)
+
+
+def get_orderbook_spread_pct(symbol):
+    """1호가 매도가와 매수가의 스프레드(%)를 계산.
+    스프레드가 넓으면(호가가 얇으면) 시장가 진입 시 슬리피지가 커지므로 진입 전 확인.
+    조회 실패 시 None 반환 (호출부에서 보수적으로 통과시킬지 결정)."""
+    coin = symbol.replace("_KRW", "")
+    url = f"https://api.bithumb.com/public/orderbook/{coin}_KRW"
+    try:
+        res = requests.get(url, params={"count": 1}, timeout=5).json()
+        if res.get("status") != "0000":
+            return None
+        data = res["data"]
+        best_ask = float(data["asks"][0]["price"])
+        best_bid = float(data["bids"][0]["price"])
+        if best_bid <= 0:
+            return None
+        return (best_ask - best_bid) / best_bid * 100
+    except Exception as e:
+        print(f"Orderbook fetch error ({symbol}): {e}")
+        return None
+
+
+# ------------------------------------------------------------------
+# 전문 트레이더 스킬 2: 김치프리미엄 체크 (한국 거래소 특유 리스크)
+# 프리미엄이 과열(양전 과다) 상태면 되돌림(역프리미엄) 리스크가 커지고,
+# 반대로 급격한 역프리미엄(음전)은 대량 매도/자금 유출 압력의 신호일 수 있어
+# 두 경우 모두 신규 진입을 보수적으로 피한다.
+# ------------------------------------------------------------------
+MAX_KIMCHI_PREMIUM_PCT = float(os.getenv("MAX_KIMCHI_PREMIUM_PCT", "5.0"))
+MIN_KIMCHI_PREMIUM_PCT = float(os.getenv("MIN_KIMCHI_PREMIUM_PCT", "-3.0"))
+
+
+def get_kimchi_premium_pct():
+    """빗썸 BTC_KRW 가격과 (바이낸스 BTCUSDT * USD/KRW 환율)을 비교한 프리미엄(%).
+    USD/KRW는 frankfurter.dev(ECB 기준 무료 공개 API, 일 단위 갱신)를 사용하므로
+    분단위 정밀도는 아니고 대략적인 과열/역프리미엄 판단용 참고 지표임."""
+    try:
+        fx = requests.get("https://api.frankfurter.dev/v1/latest",
+                           params={"from": "USD", "to": "KRW"}, timeout=5).json()
+        usdkrw = float(fx["rates"]["KRW"])
+
+        binance = requests.get("https://api.binance.com/api/v3/ticker/price",
+                                params={"symbol": "BTCUSDT"}, timeout=5).json()
+        btc_global_usd = float(binance["price"])
+
+        bithumb = requests.get("https://api.bithumb.com/public/ticker/BTC_KRW", timeout=5).json()
+        if bithumb.get("status") != "0000":
+            return None
+        btc_bithumb_krw = float(bithumb["data"]["closing_price"])
+
+        global_price_krw = btc_global_usd * usdkrw
+        if global_price_krw <= 0:
+            return None
+        return (btc_bithumb_krw - global_price_krw) / global_price_krw * 100
+    except Exception as e:
+        print(f"Kimchi premium fetch error: {e}")
+        return None
+
+
 def get_withdrawal_blacklist():
     """
     실제 존재하는 엔드포인트로 교체:
@@ -248,17 +312,30 @@ def get_all_krw_tickers():
 
 
 def build_candidates_and_blacklist(ticker_data):
+    """거래대금(acc_trade_value_24H)과 거래량(units_traded_24H) 두 지표를 각각 순위 매긴 뒤
+    평균 순위가 좋은 종목을 상위 TOP_VOL_COUNT개 뽑는다 (한쪽만 튀는 종목 배제 효과)."""
     blacklist = get_withdrawal_blacklist()
     entries = []
     for symbol, info in ticker_data.items():
         if not isinstance(info, dict):
             continue
         try:
-            entries.append((f"{symbol}_KRW", float(info.get("acc_trade_value_24H", 0))))
+            value = float(info.get("acc_trade_value_24H", 0))
+            volume = float(info.get("units_traded_24H", 0))
+            entries.append((f"{symbol}_KRW", value, volume))
         except (TypeError, ValueError):
             continue
-    entries.sort(key=lambda x: x[1], reverse=True)
-    candidates = [s for s, _ in entries[:TOP_VOL_COUNT] if s not in blacklist]
+
+    if not entries:
+        return [], blacklist
+
+    by_value = sorted(entries, key=lambda x: x[1], reverse=True)
+    value_rank = {s: i for i, (s, v, u) in enumerate(by_value)}
+    by_volume = sorted(entries, key=lambda x: x[2], reverse=True)
+    volume_rank = {s: i for i, (s, v, u) in enumerate(by_volume)}
+
+    combined = sorted(entries, key=lambda x: value_rank[x[0]] + volume_rank[x[0]])
+    candidates = [s for s, _, _ in combined[:TOP_VOL_COUNT] if s not in blacklist]
     return candidates, blacklist
 
 
@@ -558,6 +635,18 @@ def run():
         save_state(state)
         return
 
+    # --- 전문 트레이더 스킬 2: 김치프리미엄 과열/역프리미엄 시 신규 진입 보류 ---
+    kimchi_premium = get_kimchi_premium_pct()
+    state["kimchi_premium_pct"] = round(kimchi_premium, 2) if kimchi_premium is not None else None
+    if kimchi_premium is not None and not (MIN_KIMCHI_PREMIUM_PCT <= kimchi_premium <= MAX_KIMCHI_PREMIUM_PCT):
+        send_discord_msg(
+            "🌶️ [김치프리미엄 경고] 신규 진입 보류",
+            f"현재 프리미엄: {kimchi_premium:.2f}% (허용 범위: {MIN_KIMCHI_PREMIUM_PCT}~{MAX_KIMCHI_PREMIUM_PCT}%)",
+            color=15158332
+        )
+        save_state(state)
+        return
+
     scan_summary = []
     for symbol in candidates:
         time.sleep(0.2)
@@ -579,6 +668,11 @@ def run():
         if state["position"] == "NONE" and res["is_buyable"]:
             price = res["price"]
             stop_loss_estimate = res["stop_loss_estimate"]
+
+            # --- 전문 트레이더 스킬 1: 호가창 스프레드가 넓으면(유동성 부족) 이 종목은 건너뜀 ---
+            spread_pct = get_orderbook_spread_pct(symbol)
+            if spread_pct is not None and spread_pct > MAX_SPREAD_PCT:
+                continue
 
             # --- EYE.py에서 흡수: 리스크 기반 사이징 (고정금액이 아니라 손절폭 기준) ---
             position_krw = calculate_position_krw(state.get("balance", INITIAL_SEED), price, stop_loss_estimate)
