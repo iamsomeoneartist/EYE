@@ -13,9 +13,9 @@
         {
             "symbol": "HEMI_KRW",
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
-            "price": 20.44,
-            "rsi": 54.67,
-            "momentum": 0.21,
+            "price": 20.45,
+            "rsi": 53.82,
+            "momentum": 0.3,
             "atr": 0.28,
             "stop_loss_estimate": 20.02,
             "is_buyable": false
@@ -23,61 +23,71 @@
         {
             "symbol": "SKR_KRW",
             "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
-            "price": 41.71,
-            "rsi": 54.63,
-            "momentum": -0.8,
-            "atr": 1.6,
-            "stop_loss_estimate": 39.31,
+            "price": 41.25,
+            "rsi": 52.25,
+            "momentum": -0.41,
+            "atr": 1.88,
+            "stop_loss_estimate": 38.44,
             "is_buyable": false
         },
         {
             "symbol": "ZORA_KRW",
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
-            "price": 12.93,
-            "rsi": 42.17,
-            "momentum": -0.38,
-            "atr": 0.33,
-            "stop_loss_estimate": 12.44,
+            "price": 13.09,
+            "rsi": 46.87,
+            "momentum": -0.34,
+            "atr": 0.34,
+            "stop_loss_estimate": 12.58,
             "is_buyable": false
         },
         {
             "symbol": "TAVA_KRW",
             "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
-            "price": 4.612,
-            "rsi": 66.66,
-            "momentum": 0.91,
+            "price": 4.635,
+            "rsi": 67.13,
+            "momentum": 0.83,
             "atr": 0.21,
-            "stop_loss_estimate": 4.3,
+            "stop_loss_estimate": 4.32,
             "is_buyable": false
         },
         {
             "symbol": "LM_KRW",
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
-            "price": 0.9655,
-            "rsi": 53.69,
-            "momentum": -0.02,
+            "price": 0.9492,
+            "rsi": 48.98,
+            "momentum": -0.03,
             "atr": 0.02,
-            "stop_loss_estimate": 0.94,
+            "stop_loss_estimate": 0.92,
             "is_buyable": false
         },
         {
             "symbol": "ANIME_KRW",
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
-            "price": 4.0,
-            "rsi": 44.82,
-            "momentum": -0.08,
+            "price": 3.989,
+            "rsi": 43.56,
+            "momentum": -0.09,
             "atr": 0.04,
-            "stop_loss_estimate": 3.94,
+            "stop_loss_estimate": 3.93,
             "is_buyable": false
         },
         {
             "symbol": "FLOCK_KRW",
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
-            "price": 55.17,
-            "rsi": 45.28,
-            "momentum": -1.65,
-            "atr": 1.08,
-            "stop_loss_estimate": 53.55,
+            "price": 55.16,
+            "rsi": 45.37,
+            "momentum": -1.88,
+            "atr": 1.05,
+            "stop_loss_estimate": 53.58,
+            "is_buyable": false
+        },
+        {
+            "symbol": "HPP_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 11.87,
+            "rsi": 67.17,
+            "momentum": 0.88,
+            "atr": 0.5,
+            "stop_loss_estimate": 11.12,
             "is_buyable": false
         },
         {
@@ -86,18 +96,8 @@
             "price": 6.974,
             "rsi": 40.65,
             "momentum": -0.08,
-            "atr": 0.07,
+            "atr": 0.08,
             "stop_loss_estimate": 6.86,
-            "is_buyable": false
-        },
-        {
-            "symbol": "HPP_KRW",
-            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
-            "price": 11.75,
-            "rsi": 68.04,
-            "momentum": 0.91,
-            "atr": 0.46,
-            "stop_loss_estimate": 11.05,
             "is_buyable": false
         },
         {
@@ -115,9 +115,9 @@
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
             "price": 136.0,
             "rsi": 52.15,
-            "momentum": 0.9,
-            "atr": 2.2,
-            "stop_loss_estimate": 132.7,
+            "momentum": 1.42,
+            "atr": 2.11,
+            "stop_loss_estimate": 132.83,
             "is_buyable": false
         },
         {
@@ -125,9 +125,9 @@
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
             "price": 1380.0,
             "rsi": 52.42,
-            "momentum": 0.04,
-            "atr": 1.21,
-            "stop_loss_estimate": 1378.18,
+            "momentum": 0.33,
+            "atr": 1.2,
+            "stop_loss_estimate": 1378.2,
             "is_buyable": false
         },
         {
@@ -143,8 +143,8 @@
         {
             "symbol": "CAMP_KRW",
             "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
-            "price": 0.623,
-            "rsi": 54.1,
+            "price": 0.6203,
+            "rsi": 52.39,
             "momentum": 0.0,
             "atr": 0.01,
             "stop_loss_estimate": 0.61,
@@ -153,15 +153,15 @@
         {
             "symbol": "AGI_KRW",
             "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
-            "price": 7.343,
-            "rsi": 46.55,
-            "momentum": -0.17,
+            "price": 7.328,
+            "rsi": 45.63,
+            "momentum": -0.15,
             "atr": 0.07,
-            "stop_loss_estimate": 7.24,
+            "stop_loss_estimate": 7.23,
             "is_buyable": false
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-08-31 16:26:32",
+    "last_run_at": "2026-08-31 16:34:45",
     "kimchi_premium_pct": null
 }
