@@ -7,7 +7,7 @@
     "daily_loss_count": 0,
     "daily_trade_count": 0,
     "consecutive_losses": 0,
-    "last_reset_date": "2026-09-01",
+    "last_reset_date": "2026-09-02",
     "balance": 100000.0,
     "last_scan": [
         {
@@ -162,6 +162,6 @@
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-09-01 23:55:18",
+    "last_run_at": "2026-09-02 00:09:47",
     "kimchi_premium_pct": null
 }
