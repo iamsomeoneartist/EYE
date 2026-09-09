@@ -1,0 +1,2 @@
+symbol,entry_time,entry_price,exit_time,exit_price,units,pnl_krw,pnl_pct,reason,order_ok,balance_after
+SC_KRW,2026-09-09 13:32:58,1.271,2026-09-09 13:57:23,1.186,30685.35032495,-2608.25,-6.69,SL,True,97391.75

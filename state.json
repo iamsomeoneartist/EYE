@@ -1,14 +1,14 @@
 {
-    "position": "BUY",
-    "target_symbol": "SC_KRW",
-    "buy_price": 1.271,
-    "units": 30685.35032495,
-    "highest_price": 1.271,
-    "daily_loss_count": 0,
+    "position": "NONE",
+    "target_symbol": null,
+    "buy_price": 0,
+    "units": 0,
+    "highest_price": 0,
+    "daily_loss_count": 1,
     "daily_trade_count": 1,
-    "consecutive_losses": 0,
+    "consecutive_losses": 1,
     "last_reset_date": "2026-09-09",
-    "balance": 100000.0,
+    "balance": 97391.74522237925,
     "last_scan": [
         {
             "symbol": "SOPH_KRW",
@@ -162,11 +162,11 @@
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-09-09 13:47:41",
+    "last_run_at": "2026-09-09 13:57:23",
     "kimchi_premium_pct": null,
     "entry_time": "2026-09-09 13:32:58",
-    "current_price": 1.238,
-    "current_stop_loss": 1.22,
-    "current_trailing_stop": 1.2,
-    "current_rsi": 66.14
+    "current_price": 0,
+    "current_stop_loss": 0,
+    "current_trailing_stop": 0,
+    "current_rsi": 0
 }
