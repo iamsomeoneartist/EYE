@@ -4,10 +4,10 @@
     "buy_price": 0,
     "units": 0,
     "highest_price": 0,
-    "daily_loss_count": 1,
-    "daily_trade_count": 1,
+    "daily_loss_count": 0,
+    "daily_trade_count": 0,
     "consecutive_losses": 1,
-    "last_reset_date": "2026-09-09",
+    "last_reset_date": "2026-09-10",
     "balance": 97391.74522237925,
     "last_scan": [
         {
@@ -162,7 +162,7 @@
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-09-09 23:57:46",
+    "last_run_at": "2026-09-10 00:15:59",
     "kimchi_premium_pct": null,
     "entry_time": "2026-09-09 13:32:58",
     "current_price": 0,
