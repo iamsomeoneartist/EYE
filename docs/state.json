@@ -162,11 +162,11 @@
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-09-17 13:32:30",
+    "last_run_at": "2026-09-17 13:46:19",
     "kimchi_premium_pct": null,
     "entry_time": "2026-09-17 13:18:15",
-    "current_price": 7.844,
+    "current_price": 7.611,
     "current_stop_loss": 7.51,
-    "current_trailing_stop": 7.45,
-    "current_rsi": 72.19
+    "current_trailing_stop": 7.46,
+    "current_rsi": 60.43
 }
