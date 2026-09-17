@@ -1,14 +1,14 @@
 {
-    "position": "BUY",
-    "target_symbol": "AGI_KRW",
-    "buy_price": 7.802,
-    "units": 5628.6427913,
-    "highest_price": 7.844,
-    "daily_loss_count": 0,
+    "position": "NONE",
+    "target_symbol": null,
+    "buy_price": 0,
+    "units": 0,
+    "highest_price": 0,
+    "daily_loss_count": 1,
     "daily_trade_count": 1,
-    "consecutive_losses": 1,
+    "consecutive_losses": 2,
     "last_reset_date": "2026-09-17",
-    "balance": 97391.74522237925,
+    "balance": 95714.40967057185,
     "last_scan": [
         {
             "symbol": "MEV_KRW",
@@ -162,11 +162,11 @@
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-09-17 13:56:25",
+    "last_run_at": "2026-09-17 14:09:37",
     "kimchi_premium_pct": null,
     "entry_time": "2026-09-17 13:18:15",
-    "current_price": 7.751,
-    "current_stop_loss": 7.53,
-    "current_trailing_stop": 7.48,
-    "current_rsi": 65.96
+    "current_price": 0,
+    "current_stop_loss": 0,
+    "current_trailing_stop": 0,
+    "current_rsi": 0
 }
