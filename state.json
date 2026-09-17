@@ -3,7 +3,7 @@
     "target_symbol": "AGI_KRW",
     "buy_price": 7.802,
     "units": 5628.6427913,
-    "highest_price": 7.802,
+    "highest_price": 7.844,
     "daily_loss_count": 0,
     "daily_trade_count": 1,
     "consecutive_losses": 1,
@@ -162,11 +162,11 @@
         }
     ],
     "mode": "PAPER",
-    "last_run_at": "2026-09-17 13:18:21",
+    "last_run_at": "2026-09-17 13:32:30",
     "kimchi_premium_pct": null,
     "entry_time": "2026-09-17 13:18:15",
-    "current_price": 0,
-    "current_stop_loss": 0,
-    "current_trailing_stop": 0,
-    "current_rsi": 0
+    "current_price": 7.844,
+    "current_stop_loss": 7.51,
+    "current_trailing_stop": 7.45,
+    "current_rsi": 72.19
 }
