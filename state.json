@@ -9,9 +9,160 @@
     "consecutive_losses": 2,
     "last_reset_date": "2026-11-25",
     "balance": 95714.40967057185,
-    "last_scan": [],
+    "last_scan": [
+        {
+            "symbol": "SQD_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 19.91,
+            "rsi": 71.56,
+            "momentum": 0.78,
+            "atr": 0.27,
+            "stop_loss_estimate": 19.51,
+            "is_buyable": false
+        },
+        {
+            "symbol": "BIGTIME_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 9.144,
+            "rsi": 47.44,
+            "momentum": 0.01,
+            "atr": 0.13,
+            "stop_loss_estimate": 8.94,
+            "is_buyable": false
+        },
+        {
+            "symbol": "PEPE_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 0.0048,
+            "rsi": 58.3,
+            "momentum": 0.0,
+            "atr": 0.0,
+            "stop_loss_estimate": 0.0,
+            "is_buyable": false
+        },
+        {
+            "symbol": "IRYS_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 21.87,
+            "rsi": 60.13,
+            "momentum": 0.12,
+            "atr": 0.08,
+            "stop_loss_estimate": 21.76,
+            "is_buyable": false
+        },
+        {
+            "symbol": "SHIB_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 0.0049,
+            "rsi": 57.01,
+            "momentum": 0.0,
+            "atr": 0.0,
+            "stop_loss_estimate": 0.0,
+            "is_buyable": false
+        },
+        {
+            "symbol": "DKA_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 3.554,
+            "rsi": 50.38,
+            "momentum": -0.04,
+            "atr": 0.06,
+            "stop_loss_estimate": 3.46,
+            "is_buyable": false
+        },
+        {
+            "symbol": "SLX_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 45.72,
+            "rsi": 41.61,
+            "momentum": -0.88,
+            "atr": 0.29,
+            "stop_loss_estimate": 45.28,
+            "is_buyable": false
+        },
+        {
+            "symbol": "MOODENG_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 38.5,
+            "rsi": 34.02,
+            "momentum": -0.88,
+            "atr": 0.3,
+            "stop_loss_estimate": 38.05,
+            "is_buyable": false
+        },
+        {
+            "symbol": "FCT2_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 8.726,
+            "rsi": 54.52,
+            "momentum": 0.22,
+            "atr": 0.11,
+            "stop_loss_estimate": 8.56,
+            "is_buyable": false
+        },
+        {
+            "symbol": "BIOT_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 0.3033,
+            "rsi": 44.69,
+            "momentum": -0.01,
+            "atr": 0.0,
+            "stop_loss_estimate": 0.3,
+            "is_buyable": false
+        },
+        {
+            "symbol": "WAXP_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 4.806,
+            "rsi": 47.25,
+            "momentum": -0.05,
+            "atr": 0.02,
+            "stop_loss_estimate": 4.77,
+            "is_buyable": false
+        },
+        {
+            "symbol": "MON_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 15.28,
+            "rsi": 44.2,
+            "momentum": -0.08,
+            "atr": 0.18,
+            "stop_loss_estimate": 15.01,
+            "is_buyable": false
+        },
+        {
+            "symbol": "SKY_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 65.19,
+            "rsi": 48.97,
+            "momentum": -0.75,
+            "atr": 0.94,
+            "stop_loss_estimate": 63.77,
+            "is_buyable": false
+        },
+        {
+            "symbol": "XTER_KRW",
+            "reason": "\ucd94\uc138 \uc870\uac74 \ubbf8\ucda9\uc871 (EMA \uc5ed\ubc30\uc5f4)",
+            "price": 7.924,
+            "rsi": 44.33,
+            "momentum": -0.02,
+            "atr": 0.04,
+            "stop_loss_estimate": 7.87,
+            "is_buyable": false
+        },
+        {
+            "symbol": "PENGU_KRW",
+            "reason": "\uac70\ub798\ub7c9 \ubd80\uc871",
+            "price": 5.878,
+            "rsi": 61.04,
+            "momentum": 0.01,
+            "atr": 0.02,
+            "stop_loss_estimate": 5.85,
+            "is_buyable": false
+        }
+    ],
     "mode": "PAPER",
-    "last_run_at": "2026-11-25 11:04:06",
+    "last_run_at": "2026-11-25 20:26:25",
     "kimchi_premium_pct": null,
     "entry_time": "2026-09-17 13:18:15",
     "current_price": 0,
